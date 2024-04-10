@@ -1,13 +1,22 @@
 #include <Arduino.h>
-#include <wifiAP.h>
+#include <wifiSAP.h>
 #include <getMacAddress.h>
-
+#include <wifiScan.h>
+#include <./reciever/espNowReceiver.h>
+#include <./emitter/espNowSender.h>
 
 void setup() {
-    //getMacAddress();
-    //setupWiFi();
+  //getMacAddress();
+  //setupWiFiSAP();
+  //setupWiFiScan();
+  //setupEspNowSender();
+  //setupEspNowReceiver();
+
 }
 
 void loop() {
-    //loopWiFi();
+  //loopWiFiSAP();
+  //loopWiFiScan();
+  //loopEspNowSender();
+  //loopEspNowReceiver();
 }

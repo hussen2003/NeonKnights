@@ -1,5 +1,5 @@
 // Load Wi-Fi library
-#include "wifiAP.h"
+#include "wifiSAP.h"
 #include <WiFi.h>
 
 
@@ -27,7 +27,7 @@ unsigned long previousTime = 0;
 // Define timeout time in milliseconds
 const long timeoutTime = 2000;
 
-void setupWiFi() {
+void setupWiFiSAP() {
   Serial.begin(115200);
   
   pinMode(ledPin16, OUTPUT);      // set the LED pin mode
@@ -44,7 +44,7 @@ void setupWiFi() {
   server.begin();
 }
 
-void loopWiFi() {
+void loopWiFiSAP() {
   WiFiClient client = server.available();   // Listen for incoming clients
 
   if (client) {                             // If a new client connects,
