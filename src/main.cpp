@@ -4,10 +4,10 @@
 
 
 void setup() {
-    getMacAddress();
-    setupWiFi();
+    //getMacAddress();
+    //setupWiFi();
 }
 
 void loop() {
-    loopWiFi();
+    //loopWiFi();
 }
