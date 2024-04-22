@@ -1,9 +1,12 @@
+#include <wifiScan.h>
 #include <WiFi.h>
+
+WifiScan::WifiScan() {};
 
 #define greenLedPin 17
 #define redLedPin 16
 
-void setupWiFiScan() 
+void WifiScan::setup() 
 {
   Serial.begin(115200);
   pinMode(greenLedPin, OUTPUT);
@@ -14,7 +17,7 @@ void setupWiFiScan()
   delay(1000);
 }
 
-void loopWiFiScan() 
+void WifiScan::loop() 
 {
   Serial.println("scanning available networks...");
   digitalWrite(greenLedPin, LOW);

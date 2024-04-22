@@ -1,5 +1,8 @@
+#include "espNowSender.h"
 #include <esp_now.h>
 #include <WiFi.h>
+
+EspNowSender::EspNowSender() {};
 
 #define buttonPin 0
 
@@ -25,7 +28,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Failure");
 }
 
-void setupEspNowSender()
+void EspNowSender::setup()
 {
   Serial.begin(115200);
   
@@ -51,7 +54,7 @@ void setupEspNowSender()
   pinMode(buttonPin, INPUT);
 }
 
-void loopEspNowSender()
+void EspNowSender::loop()
 {
   int value = random(1,20);
   int button_state = digitalRead(buttonPin);

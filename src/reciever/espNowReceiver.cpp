@@ -1,9 +1,11 @@
+#include "espNowReceiver.h"
 #include <esp_now.h>
 #include <WiFi.h>
 
 #define greenLedPin 17
 #define redLedPin 16
 
+EspNowReceiver::EspNowReceiver() {};
 
 typedef struct struct_message {
     int button_value;
@@ -21,7 +23,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 
 }
  
-void setupEspNowReceiver() {
+void EspNowReceiver::setup() {
   Serial.begin(115200);
   
   WiFi.mode(WIFI_STA);
@@ -39,7 +41,7 @@ void setupEspNowReceiver() {
   // Turn on the red LED by default
   digitalWrite(redLedPin, HIGH);
 }
-void loopEspNowReceiver() {
+void EspNowReceiver::loop() {
   if(my_data.button_value == 0)
   {
     digitalWrite(greenLedPin, HIGH);

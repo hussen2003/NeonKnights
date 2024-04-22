@@ -2,6 +2,7 @@
 #include "wifiSAP.h"
 #include <WiFi.h>
 
+WifiSAP::WifiSAP() {};
 
 // Network credentials Here
 const char* ssid     = "NEONKNIGHTS";
@@ -27,7 +28,7 @@ unsigned long previousTime = 0;
 // Define timeout time in milliseconds
 const long timeoutTime = 2000;
 
-void setupWiFiSAP() {
+void WifiSAP::setup() {
   Serial.begin(115200);
   
   pinMode(ledPin16, OUTPUT);      // set the LED pin mode
@@ -44,7 +45,7 @@ void setupWiFiSAP() {
   server.begin();
 }
 
-void loopWiFiSAP() {
+void WifiSAP::loop() {
   WiFiClient client = server.available();   // Listen for incoming clients
 
   if (client) {                             // If a new client connects,

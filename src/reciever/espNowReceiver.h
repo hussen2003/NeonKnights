@@ -1,7 +1,10 @@
 #ifndef ESPNOWRECEIVER_H
 #define ESPNOWRECEIVER_H
 
-void setupEspNowReceiver();
-void loopEspNowReceiver();
-
+class EspNowReceiver{
+  public:
+    EspNowReceiver();
+    void setup();
+    void loop();
+};
 #endif

@@ -1,7 +1,10 @@
 #ifndef ESPNOWSENDER_H
 #define ESPNOWSENDER_H
 
-void setupEspNowSender();
-void loopEspNowSender();
-
+class EspNowSender{
+  public:
+    EspNowSender();
+    void setup();
+    void loop();
+};
 #endif

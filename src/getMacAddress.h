@@ -1,6 +1,12 @@
-#ifndef GETMACADDRESS_H
-#define GETMACADDRESS_H
+#ifndef GET_MAC_ADDRESS_H
+#define GET_MAC_ADDRESS_H
 
-void getMacAddress();
+#include <WiFi.h>
 
-#endif 
+class GetMacAddress {
+  public:
+    GetMacAddress();
+    void setup();
+};
+
+#endif // GET_MAC_ADDRESS_H
