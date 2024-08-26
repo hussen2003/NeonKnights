@@ -1,4 +1,4 @@
-#include <wifiScan.h>
+#include "wifiScan.h"
 #include <WiFi.h>
 
 WifiScan::WifiScan() {};

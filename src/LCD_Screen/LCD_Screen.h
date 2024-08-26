@@ -6,7 +6,6 @@
 #include <LiquidCrystal.h>
 
 class LCD_Screen {
-
   public:
     LCD_Screen();
     void setup();
