@@ -1,28 +1,38 @@
 #include "espNowReceiver.h"
 #include <esp_now.h>
 #include <WiFi.h>
-
-#define greenLedPin 17
-#define redLedPin 16
+#include <./LCD_Screen/LCD_TFT.h>
 
 EspNowReceiver::EspNowReceiver() {};
 
 typedef struct struct_message {
-    int button_value;
+  int button_value;
 } struct_message;
 
 struct_message my_data;
+int sensor_value;
 
 // callback function that will be executed when data is received
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
+{
+  delay(100); // Optional delay, can be removed
   memcpy(&my_data, incomingData, sizeof(my_data));
-  Serial.print("Bytes received: ");
-  Serial.println(len);
-  Serial.print("Button Value: ");
-  Serial.println(my_data.button_value);
 
+  // Update sensor_value when new data is received
+  sensor_value = my_data.button_value;
+
+  // Serial.print("Bytes received: ");
+  // Serial.println(len);
+  // Serial.print("Sensor Value: ");
+  // Serial.println(sensor_value);
+  // Serial.println();
 }
- 
+
+int EspNowReceiver::getButtonValue()
+{
+  return sensor_value;
+}
+
 void EspNowReceiver::setup() {
   Serial.begin(115200);
   
@@ -35,21 +45,9 @@ void EspNowReceiver::setup() {
   
   esp_now_register_recv_cb(OnDataRecv);
 
-  pinMode(redLedPin, OUTPUT);
-  pinMode(greenLedPin, OUTPUT);
 
-  // Turn on the red LED by default
-  digitalWrite(redLedPin, HIGH);
 }
 void EspNowReceiver::loop() {
-  if(my_data.button_value == 0)
-  {
-    digitalWrite(greenLedPin, HIGH);
-    digitalWrite(redLedPin, LOW);
-  }
-  if(my_data.button_value == 1)
-  {
-    digitalWrite(greenLedPin, LOW);
-    digitalWrite(redLedPin, HIGH);
-  }
+  
 }
+

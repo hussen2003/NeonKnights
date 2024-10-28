@@ -4,16 +4,17 @@
 #include "LCD_TFT.h"
 
 // Define the pins for the TFT display
-#define TFT_CS     15
-#define TFT_RST    4
-#define TFT_DC     2
-#define TFT_SCLK   18
-#define TFT_MOSI   23
+#define TFT_CS 5
+#define TFT_RST 17
+#define TFT_DC 16
+#define TFT_SCLK 18
+#define TFT_MOSI 23
 
 LCD_TFT::LCD_TFT() : tft(TFT_CS, TFT_DC, TFT_RST) {}
 
 
-void LCD_TFT::setup() {
+void LCD_TFT::setup()
+{
   // Initialize the display
   tft.initR(INITR_144GREENTAB);
   tft.fillScreen(ST77XX_BLACK);
@@ -25,9 +26,10 @@ void LCD_TFT::setup() {
   // tft.println("Hello, World!");
 
   // // Draw a rectangle
-  // tft.drawRect(10, 10, 50, 50, ST77XX_RED);
+  //tft.drawRect(10, 10, 50, 50, ST77XX_RED);
 }
 
-void LCD_TFT::loop() {
+void LCD_TFT::loop()
+{
   // Nothing to do here
 }
