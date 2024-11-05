@@ -58,6 +58,7 @@ void EspNowSender::setup()
 void EspNowSender::loop()
 {
   int sensor_val = analogRead(34);
+
   // if(sensor_val > 0)
   // {
   //   myData.button_value = 0;
@@ -67,6 +68,7 @@ void EspNowSender::loop()
   //   myData.button_value = 1;
   // }
 
+  
   myData.button_value = sensor_val;
 
   esp_err_t result = esp_now_send(mac_address, (uint8_t *) &myData, sizeof(myData));
