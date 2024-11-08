@@ -1,0 +1,87 @@
+#include <Arduino.h>
+#include <IRremoteESP8266.h>
+#include <IRsend.h>
+
+// Define the pin for IR LED (GPIO4/D2 on ESP32)
+const uint16_t kIrLed = 4; // Pin D2 on ESP32 for IR LED
+
+IRsend irsend(kIrLed); // Create IRsend object to handle IR transmission
+
+// Define a structure to hold player data
+struct Player
+{
+  uint8_t health;   // Health (0-100)
+  uint8_t damage;   // Damage (0-100)
+  uint8_t playerId; // Player ID (0-10)
+  uint8_t teamId;   // Team ID (0-10)
+  uint8_t kills;    // Kills (0-100)
+  uint8_t deaths;   // Deaths (0-100)
+  bool alive;       // Alive (true/false)
+
+  // Method to encode player data to a 32-bit value
+  uint32_t encode() const
+  {
+    uint32_t data = 0;
+
+    // Encode each field into the 32-bit value using bit shifting
+    data |= (health & 0x7F);         // 7 bits for health
+    data |= (damage & 0x7F) << 7;    // 7 bits for damage
+    data |= (playerId & 0x0F) << 14; // 4 bits for player ID
+    data |= (teamId & 0x0F) << 18;   // 4 bits for team ID
+    data |= (kills & 0x7F) << 22;    // 7 bits for kills
+    data |= (deaths & 0x7F) << 29;   // 7 bits for deaths
+    data |= (alive ? 1 : 0) << 31;   // 1 bit for alive status
+
+    return data;
+  }
+
+  // Method to print player information
+  void printPlayerInfo() const
+  {
+    Serial.print("Health: ");
+    Serial.println(health);
+    Serial.print("Damage: ");
+    Serial.println(damage);
+    Serial.print("Player ID: ");
+    Serial.println(playerId);
+    Serial.print("Team ID: ");
+    Serial.println(teamId);
+    Serial.print("Kills: ");
+    Serial.println(kills);
+    Serial.print("Deaths: ");
+    Serial.println(deaths);
+    Serial.print("Alive: ");
+    Serial.println(alive ? "Yes" : "No");
+    Serial.println();
+  }
+};
+
+void setup()
+{
+  irsend.begin();       // Initialize the IR sender
+  Serial.begin(115200); // Start serial communication for debugging
+  delay(2000);          // Delay to allow serial monitor to initialize
+}
+
+void loop()
+{
+  // Create a player object with some example data
+  Player player1 = {100, 25, 2, 1, 33, 17, false}; // Health: 100, Damage: 50, Player ID: 1, Team ID: 2, Kills: 10, Deaths: 5, Alive: true
+
+  // Print player information on sender side
+  Serial.println("Sending player data...");
+  player1.printPlayerInfo();
+
+  // Encode the player data to a 32-bit value
+  uint32_t data = player1.encode();
+
+  // Print the encoded data in HEX for debugging
+  Serial.print("Sending encoded data (Hex): ");
+  Serial.println(data, HEX);
+
+  // Send the data using the NEC protocol
+  Serial.println("Sending NEC protocol...");
+  irsend.sendNEC(data, 32); // Send the 32-bit data using the NEC protocol
+
+  delay(2000); // Wait for 2 seconds before sending again
+}
