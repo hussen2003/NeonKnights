@@ -6,8 +6,8 @@ extern EspNowSender espNowSender;
 Reciever::Reciever() {};
 
 //int pd = 25;     // digital photodiode pin
-int sensor = 34; // readings from sensor to analog pin
-int ledPin = 12;
+int sensor = 32; // readings from sensor to analog pin
+int ledPin = 18;
 
 void Reciever :: setup()
 {

@@ -15,10 +15,12 @@ const int pwmPin = 27; // Replace with your desired PWM pin
 //const int ledPin = 2;
 const int frequency = 38000; // 38kHz frequency
 const int buttonPin = 32;
+const int reload_pin = 25;
 
 
 void Emitter :: setup()
 {
+    
     espNowReceiver.setup();
     lcd.setup();
 
@@ -31,6 +33,8 @@ void Emitter :: setup()
     pinMode(pwmPin, OUTPUT);
     //pinMode(ledPin, OUTPUT);
     pinMode(buttonPin, INPUT_PULLUP);
+    pinMode(reload_pin, INPUT_PULLUP);
+    
 }
 
 int sensor_Value;
@@ -38,14 +42,14 @@ int sensor_Value;
 void Emitter::loop()
 {
     espNowReceiver.loop();
-
     if (digitalRead(buttonPin) == LOW) // Button pressed
     {
+        
         // Send shot signal
         tone(pwmPin, frequency); // Generate a 38kHz tone
         delay(100);              // Keep tone for 100ms
         noTone(pwmPin);          // Stop the tone
-        delay(100);              // Debounce delay
+        delay(500);              // Debounce delay
 
         // Immediately check the receiver value
         sensor_Value = espNowReceiver.getButtonValue();
@@ -56,6 +60,7 @@ void Emitter::loop()
         lcd.tft.setTextSize(1);
         lcd.tft.setTextColor(ST77XX_WHITE);
         lcd.tft.println("EMITTER SHOT!!!");
+        
 
         if (sensor_Value == 0) // Check if shot hit
         {
@@ -66,8 +71,12 @@ void Emitter::loop()
             lcd.tft.println("SHOT MISSED!");
         }
 
+
         // Serial print for debugging
-        Serial.print("Receiver Value: ");
-        Serial.println(sensor_Value);
+        // Serial.print("Receiver Value: ");
+        // Serial.println(sensor_Value);
     }
+    
+    Serial.print("Receiver Value: ");
+    Serial.println(sensor_Value);
 }
