@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
+#include <AsyncTCP.h>
 #include "Scoreboard.h"
 #include "SPIFFS.h"
 
@@ -11,10 +12,11 @@ const char* Password = "neonknights";
 
 // Create an AsyncWebServer object on port 80
 AsyncWebServer Server(80);
+AsyncWebSocket ws("/ws");
 
 String Gamemode = "";
 
-String Team1Name = "";
+String Team1Name = "test";
 String Team1Color = "";
 String Player1Name = "";
 String Player1Health = "";
@@ -25,6 +27,14 @@ String Team2Color = "";
 String Player2Name = "";
 String Player2Health = "";
 String Player2Damage = "";
+
+int Player1Score = 0;
+int Player1Kills = 0;
+int Player1Deaths = 0;
+
+int Player2Score = 0;
+int Player2Kills = 0;
+int Player2Deaths = 0;
 
 // Function to return HTML content
 String getHTML() {
@@ -63,7 +73,19 @@ String getHTML() {
                     justify-content: center;
                     color: white;
                 }
-                .container {
+                .gamesetup {
+                    background-color: rgba(0, 0, 0, 0.6); /* Translucent black */
+                    padding: 30px;
+                    border-radius: 10px;
+                    width: 100%;
+                    max-width: 3500px;
+                    box-sizing: border-box;
+                    backdrop-filter: blur(10px); /* Applies blur to the background */
+                    box-shadow: 0px 4px 20px rgba(255, 255, 255, 0.3); /* Optional shadow for depth */
+                    color: white;
+                }
+                .scoreboard {
+                
                     background-color: rgba(0, 0, 0, 0.6); /* Translucent black */
                     padding: 30px;
                     border-radius: 10px;
@@ -93,7 +115,18 @@ String getHTML() {
                     width: 100%;
                     gap: 50px;  /* Add gap between the teams containers */
                 }
-                .team{
+                .team1{
+                    background-color: rgb(0, 0, 0);
+                    padding: 20px; 
+                    border-radius: 10px;
+                    width: 100%;
+                    backdrop-filter: blur(10px); /* Applies blur to the background */
+                    color: white;
+                    display: flex;           /* Make it a flex container */
+                    flex-direction: column;  /* Arrange children vertically */
+                    align-items: center;     /* Center align items horizontally */
+                }
+                .team2{
                     background-color: rgb(0, 0, 0);
                     padding: 20px; 
                     border-radius: 10px;
@@ -119,9 +152,57 @@ String getHTML() {
                     margin: 0px;
                     border-radius: 10px;
                 }
+                .hidden {
+                    display: none;
+                }
+                .statbox{
+                    display: flex;
+                    flex-direction: row;  /* Stack label and input/select side by side */
+                    align-items: flex-start; /* Left-align items */
+                    justify-content: flex-start; /* Align items to the left */
+                    width: 100%;
+                    margin-top: 15px;
+                    margin-bottom: 0px;
+                }
+                .stat {
+                    color: white;
+                    border-color: 30px, white;
+                    min-width: 100px;
+                    max-width: 100px;
+                }
             </style>
             <script>
+                let socket = new WebSocket("ws://" + window.location.hostname + "/ws");
+
+                socket.onmessage = function(event) {
+                    let data = JSON.parse(event.data);
+                    
+                    // Update team and player elements based on received data
+                    document.getElementById("t1n").textContent = data.t1n;
+                    document.getElementById("p1n").textContent = data.p1n;
+                    document.getElementById("player1score").textContent = data.player1score;
+                    document.getElementById("player1kills").textContent = data.player1kills;
+                    document.getElementById("player1deaths").textContent = data.player1deaths;
+
+                    document.getElementById("t2n").textContent = data.t2n;
+                    document.getElementById("p2n").textContent = data.p2n;
+                    document.getElementById("player2score").textContent = data.player2score;
+                    document.getElementById("player2kills").textContent = data.player2kills;
+                    document.getElementById("player2deaths").textContent = data.player2deaths;
+                };
+
+                socket.onclose = function(event) {
+                    console.log("WebSocket closed");
+                };
+                
+                window.onload = function() {
+                    document.querySelector('.scoreboard').classList.add('hidden');
+                };
+
                 function confirmgame() {
+                    document.querySelector('.gamesetup').classList.add('hidden');
+                    document.querySelector('.scoreboard').classList.remove('hidden');
+
                     const formData = new FormData();
                     formData.append("gamemode", document.getElementById("gamemode").value);
                     formData.append("team1name", document.getElementById("team1name").value);
@@ -140,10 +221,15 @@ String getHTML() {
                         body: formData
                     }).then(response => response.text()).then(data => console.log("Data submitted:", data));
                 }
+
+                function endgame() {
+                    document.querySelector('.gamesetup').classList.remove('hidden');
+                    document.querySelector('.scoreboard').classList.add('hidden');
+                }
             </script>
         </head>
         <body>
-            <div class="container">
+            <div class="gamesetup">
                 <h1>Neon Knights Laser Tag</h1>
 
                 <label for="gamemode" style="font-size: 24px;">Select Game Mode: </label>
@@ -154,7 +240,7 @@ String getHTML() {
                 </select>
 
                 <div class="teambox">
-                    <div class="team">
+                    <div class="team1">
                         <h2>Team 1</h2>
 
                         <div class="teamitem">
@@ -187,7 +273,7 @@ String getHTML() {
                         </div>
                     </div>
 
-                    <div class="team">
+                    <div class="team2">
                         <h2>Team 2</h2>
 
                         <div class="teamitem">
@@ -223,10 +309,116 @@ String getHTML() {
 
                 <button onclick="confirmgame()">Confirm Game Setup</button>
             </div>
+
+            <div class="scoreboard">
+                <h1>Neon Knights Laser Tag</h1>
+
+                <div class="teambox">
+                
+                    <div class="team1">
+                        <div class="stat" id="t1n">
+                            )rawliteral" + Team1Name + R"rawliteral(
+                        </div>
+
+                        <div class="statbox">
+                            <div class="stat">
+                                PlayerName
+                            </div>
+                            <div class="stat">
+                                Score
+                            </div>
+                            <div class="stat">
+                                Kills
+                            </div>
+                            <div class="stat">
+                                Deaths
+                            </div>
+                        </div>
+
+                        <div class="statbox">
+                            <div class="stat" id="p1n">
+                                )rawliteral" + Player1Name + R"rawliteral(
+                            </div>
+                            <div class="stat" id="player1score">
+                                )rawliteral" + Player1Score + R"rawliteral(
+                            </div>
+                            <div class="stat" id="player1kills">
+                                )rawliteral" + Player1Kills + R"rawliteral(
+                            </div>
+                            <div class="stat" id="player1deaths">
+                                )rawliteral" + Player1Deaths + R"rawliteral(
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="team2">
+                        <div class="stat" id="t2n">
+                            )rawliteral" + Team2Name + R"rawliteral(
+                        </div>
+
+                        <div class="statbox">
+                            <div class="stat">
+                                PlayerName
+                            </div>
+                            <div class="stat">
+                                Score
+                            </div>
+                            <div class="stat">
+                                Kills
+                            </div>
+                            <div class="stat">
+                                Deaths
+                            </div>
+                        </div>
+
+                        <div class="statbox">
+                            <div class="stat"  id="p2n">
+                                )rawliteral" + Player2Name + R"rawliteral(
+                            </div>
+                            <div class="stat" id="player2score">
+                                )rawliteral" + Player2Score + R"rawliteral(
+                            </div>
+                            <div class="stat" id="player2kills">
+                                )rawliteral" + Player2Kills + R"rawliteral(
+                            </div>
+                            <div class="stat" id="player2deaths">
+                                )rawliteral" + Player2Deaths + R"rawliteral(
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="endgame()">End Game</button>
+            </div>
         </body>
         </html>
     )rawliteral";
     return html;
+}
+
+void UpdateWebpage() {
+    String json = "{";
+    json += "\"t1n\":\"" + Team1Name + "\",";
+    json += "\"p1n\":\"" + Player1Name + "\",";
+    json += "\"player1score\":" + String(Player1Score) + ",";
+    json += "\"player1kills\":" + String(Player1Kills) + ",";
+    json += "\"player1deaths\":" + String(Player1Deaths) + ",";
+    json += "\"t2n\":\"" + Team2Name + "\",";
+    json += "\"p2n\":\"" + Player2Name + "\",";
+    json += "\"player2score\":" + String(Player2Score) + ",";
+    json += "\"player2kills\":" + String(Player2Kills) + ",";
+    json += "\"player2deaths\":" + String(Player2Deaths);
+    json += "}";
+    
+    ws.textAll(json);
+}
+
+void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, 
+               AwsEventType type, void *arg, uint8_t *data, size_t len) {
+    if (type == WS_EVT_CONNECT) {
+        Serial.println("WebSocket client connected");
+    } else if (type == WS_EVT_DISCONNECT) {
+        Serial.println("WebSocket client disconnected");
+    }
 }
 
 
@@ -253,6 +445,10 @@ void Scoreboard::setup() {
     // serve backgroung image
     Server.serveStatic("/Laser.jpg", SPIFFS, "/Laser.jpg");
 
+    // WebSocket setup
+    ws.onEvent(onWsEvent);
+    Server.addHandler(&ws);
+
     // Handle form submission
     Server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request) {
         if (request->hasParam("gamemode", true)) Gamemode = request->getParam("gamemode", true)->value();
@@ -277,6 +473,16 @@ void Scoreboard::setup() {
 
 void Scoreboard::loop()
 {
+    Player1Score += 10;
+    Player1Kills += 2;
+    Player1Deaths += 1;
+
+    Player2Score += 5;
+    Player2Kills += 1;
+    Player2Deaths += 2;
+
+    UpdateWebpage();
+
     // Nothing to do here
     Serial.println("Gamemode: " + Gamemode);
     Serial.println("Team 1 - Name: " + Team1Name + ", Color: " + Team1Color + ", Player Name: " + Player1Name + ", Health: " + Player1Health + ", Damage: " + Player1Damage);
