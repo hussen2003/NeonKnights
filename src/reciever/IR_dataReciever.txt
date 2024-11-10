@@ -1,0 +1,81 @@
+#include <Arduino.h>
+#include <IRremoteESP8266.h>
+#include <IRrecv.h>
+#include <IRutils.h>
+
+// GPIO pin for receiving IR signals (GPIO5, D1 on ESP32 or ESP8266)
+const uint16_t kRecvPin = 25; // Example: Change pin if necessary
+
+IRrecv irrecv(kRecvPin); // Create IRrecv object to handle IR receiving
+decode_results results;   // Variable to store the decoded result
+
+// Define a structure to hold player data
+struct Player {
+  uint8_t health;    // Health (0-100)
+  uint8_t damage;    // Damage (0-100)
+  uint8_t playerId;  // Player ID (0-10)
+  uint8_t teamId;    // Team ID (0-10)
+  uint8_t kills;     // Kills (0-100)
+  uint8_t deaths;    // Deaths (0-100)
+  bool alive;        // Alive (true/false)
+
+  // Method to print player data
+  void printPlayerInfo() const {
+    Serial.print("Health: ");
+    Serial.println(health);
+    Serial.print("Damage: ");
+    Serial.println(damage);
+    Serial.print("Player ID: ");
+    Serial.println(playerId);
+    Serial.print("Team ID: ");
+    Serial.println(teamId);
+    Serial.print("Kills: ");
+    Serial.println(kills);
+    Serial.print("Deaths: ");
+    Serial.println(deaths);
+    Serial.print("Alive: ");
+    Serial.println(alive ? "Yes" : "No");
+    Serial.println();
+  }
+
+  // Method to decode a 32-bit data into a player struct
+  static Player decode(uint32_t data) {
+    Player player;
+
+    // Decode the 32-bit data into individual fields
+    player.health = data & 0x7F;              // Extract health (7 bits)
+    player.damage = (data >> 7) & 0x7F;       // Extract damage (7 bits)
+    player.playerId = (data >> 14) & 0x0F;    // Extract player ID (4 bits)
+    player.teamId = (data >> 18) & 0x0F;      // Extract team ID (4 bits)
+    player.kills = (data >> 22) & 0x7F;       // Extract kills (7 bits)
+    player.deaths = (data >> 29) & 0x7F;      // Extract deaths (7 bits)
+    player.alive = (data >> 31) & 0x01;       // Extract alive status (1 bit)
+
+    return player;
+  }
+};
+
+void setup() {
+  Serial.begin(115200); // Start serial communication for debugging
+  irrecv.enableIRIn();  // Initialize the IR receiver
+  while (!Serial)
+    delay(50); // Wait for the serial connection
+  Serial.println("IR Receiver Ready. Waiting for IR data...");
+}
+
+void loop() {
+  if (irrecv.decode(&results)) {
+    // Print the received data in HEX format
+    Serial.print("Received NEC data (Hex): ");
+    Serial.println(results.value, HEX);
+
+    // Decode the received 32-bit value into a player object
+    Player player = Player::decode(results.value);
+
+    // Print the decoded player information
+    player.printPlayerInfo();
+
+    irrecv.resume(); // Ready to receive the next signal
+  }
+  delay(100); // Small delay to avoid overwhelming the serial output
+}
