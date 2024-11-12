@@ -4,84 +4,80 @@
 
 EspNowSender::EspNowSender() {};
 
-#define buttonPin 0
-#define greenLEDPin = 27 
+// REPLACE WITH THE RECEIVER'S MAC Address
+uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-int button_value;
-uint8_t mac_address [] = {0xD0, 0xEF, 0x76, 0x15, 0x22, 0xB8};
-
-// mac address of receiver
-//uint8_t mac_address [] = {0xFC, 0xB4, 0x67, 0x72, 0x7C, 0x94};
-
-typedef struct message
+// Structure example to send data
+// Must match the receiver structure
+typedef struct struct_message
 {
-  int button_value;
- 
-} message;
+  int id; // must be unique for each sender board
+  int x;
+  int y;
+} struct_message;
 
-message myData;
+// Create a struct_message called myData
+struct_message myData;
 
+// Create peer interface
 esp_now_peer_info_t peerInfo;
 
-//callback
+// callback when data is sent
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  Serial.printf("\r\nPacket send status: \t");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Failure");
+  Serial.print("\r\nLast Packet Send Status:\t");
+  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
-void EspNowSender::setup()
+void setup()
 {
+  // Init Serial Monitor
   Serial.begin(115200);
-  
+
+  // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
 
-  if(esp_now_init() != ESP_OK)
+  // Init ESP-NOW
+  if (esp_now_init() != ESP_OK)
   {
-    Serial.println("ESP_NOW init failed");
+    Serial.println("Error initializing ESP-NOW");
     return;
   }
 
+  // Once ESPNow is successfully Init, we will register for Send CB to
+  // get the status of Trasnmitted packet
   esp_now_register_send_cb(OnDataSent);
 
-  memcpy(peerInfo.peer_addr, mac_address, sizeof(peerInfo.peer_addr));
+  // Register peer
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
-  
-  if(esp_now_add_peer(&peerInfo) != ESP_OK)
+
+  // Add peer
+  if (esp_now_add_peer(&peerInfo) != ESP_OK)
   {
-    Serial.println("ESP_NOW add peer failed");
+    Serial.println("Failed to add peer");
     return;
   }
 }
 
-void EspNowSender::loop()
+void loop()
 {
-  int sensor_val = analogRead(34);
+  // Set values to send
+  myData.id = 1;
+  myData.x = random(0, 50);
+  myData.y = random(0, 50);
 
-  // if(sensor_val > 0)
-  // {
-  //   myData.button_value = 0;
-  // }
-  // else if (sensor_val == 0)
-  // {
-  //   myData.button_value = 1;
-  // }
+  // Send message via ESP-NOW
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
 
-  
-  myData.button_value = sensor_val;
-
-  esp_err_t result = esp_now_send(mac_address, (uint8_t *) &myData, sizeof(myData));
-
-  if(result == ESP_OK)
+  if (result == ESP_OK)
   {
-
-    Serial.println("ESP_NOW send success");
-    Serial.print("Receiver data: ");
-    Serial.println(myData.button_value);
-  }else{
-    Serial.println("ESP_NOW send failed");
+    Serial.println("Sent with success");
   }
-
+  else
+  {
+    Serial.println("Error sending the data");
+  }
+  delay(10000);
 }
-

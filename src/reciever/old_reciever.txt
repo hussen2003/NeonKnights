@@ -1,0 +1,146 @@
+#include <Arduino.h>
+#include <IRremote.h>
+#include "reciever.h"
+
+Reciever::Reciever() {};
+
+// Define pins for each zone (sensor and LED)
+const int led1 = 18;    // LED for zone 1
+const int sensor1 = 32; // Sensor for zone 1
+const int led2 = 4;     // LED for zone 2
+const int sensor2 = 35; // Sensor for zone 2
+const int led3 = 27;    // LED for zone 3
+const int sensor3 = 34; // Sensor for zone 3
+const int led4 = 33;    // LED for zone 4
+const int sensor4 = 39; // Sensor for zone 4
+
+// Define a structure to hold player data
+struct Player
+{
+    uint8_t health;
+    uint8_t damage;
+    uint8_t playerId;
+    uint8_t teamId;
+    uint8_t kills;
+    uint8_t deaths;
+    bool alive;
+
+    // Method to print player data
+    void printPlayerInfo(const char *zone) const
+    {
+        Serial.print("Zone: ");
+        Serial.println(zone);
+        Serial.print("Health: ");
+        Serial.println(health);
+        Serial.print("Damage: ");
+        Serial.println(damage);
+        Serial.print("Player ID: ");
+        Serial.println(playerId);
+        Serial.print("Team ID: ");
+        Serial.println(teamId);
+        Serial.print("Kills: ");
+        Serial.println(kills);
+        Serial.print("Deaths: ");
+        Serial.println(deaths);
+        Serial.print("Alive: ");
+        Serial.println(alive ? "Yes" : "No");
+        Serial.println();
+    }
+
+    // Method to decode a 32-bit data into a player struct
+    static Player decode(uint32_t data)
+    {
+        Player player;
+        player.health = data & 0x7F;
+        player.damage = (data >> 7) & 0x7F;
+        player.playerId = (data >> 14) & 0x0F;
+        player.teamId = (data >> 18) & 0x0F;
+        player.kills = (data >> 22) & 0x7F;
+        player.deaths = (data >> 29) & 0x7F;
+        player.alive = (data >> 31) & 0x01;
+        return player;
+    }
+};
+
+// Initialize the LEDs and sensors
+void setupSensorsAndLeds()
+{
+    pinMode(sensor1, INPUT);
+    pinMode(led1, OUTPUT);
+    digitalWrite(led1, LOW);
+
+    pinMode(sensor2, INPUT);
+    pinMode(led2, OUTPUT);
+    digitalWrite(led2, LOW);
+
+    pinMode(sensor3, INPUT);
+    pinMode(led3, OUTPUT);
+    digitalWrite(led3, LOW);
+
+    pinMode(sensor4, INPUT);
+    pinMode(led4, OUTPUT);
+    digitalWrite(led4, LOW);
+}
+
+void Reciever::setup()
+{
+    Serial.begin(115200); // Start serial communication
+
+    // Initialize IR receivers for each zone using IrReceiver
+    IrReceiver.begin(sensor1); // Zone 1
+    IrReceiver.begin(sensor2); // Zone 2
+    IrReceiver.begin(sensor3); // Zone 3
+    IrReceiver.begin(sensor4); // Zone 4
+
+    setupSensorsAndLeds(); // Setup sensors and LEDs
+    Serial.println("IR Receivers Ready. Waiting for IR data...");
+}
+
+// Function to check IR signals for a specific zone
+void checkZone(int sensorPin, int ledPin, const char *zoneLabel)
+{
+    int sensorValue = digitalRead(sensorPin);
+
+    // If sensor detects a signal (LOW means detection in digitalRead)
+    if (sensorValue == 0)
+    {
+        // Print sensor value for debugging
+        Serial.print("Sensor Value for ");
+        Serial.print(zoneLabel);
+        Serial.print(": ");
+        Serial.println(sensorValue);
+        digitalWrite(ledPin, HIGH); // Turn on LED for this zone
+
+        // Check if IR signal is received
+        if (IrReceiver.decode())
+        {
+            Serial.print("Zone: ");
+            Serial.println(zoneLabel);
+            Serial.print("Received data (Hex): ");
+            Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX);
+
+            // Decode and print player data
+            Player player = Player::decode(IrReceiver.decodedIRData.decodedRawData);
+            player.printPlayerInfo(zoneLabel);
+
+            IrReceiver.resume(); // Ready to receive next signal
+        }
+    }
+    else
+    {
+        digitalWrite(ledPin, LOW); // Turn off LED when no signal
+    }
+}
+
+void Reciever::loop()
+{
+    // Check each zone (sensor and LED) with the corresponding IR receiver
+    checkZone(sensor1, led1, "Zone 1");
+    delay(100);
+    checkZone(sensor2, led2, "Zone 2");
+    delay(100);
+    checkZone(sensor3, led3, "Zone 3");
+    delay(100);
+    checkZone(sensor4, led4, "Zone 4");
+    delay(100);
+}

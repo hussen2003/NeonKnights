@@ -11,6 +11,9 @@
 #include <./LCD_Screen/LCD_TFT.h>
 #include <./LCD_Screen/menu.h>
 
+//  Main hub: FC:B4:67:74:4B:E0
+//  Vest 1: D0:EF:76:15:4E:20
+//  Gun 2:
 
 GetMacAddress getMacAddress;
 WifiSAP wifiSAP;
@@ -25,23 +28,21 @@ Emitter emitter;
 Reciever reciever;
 
 void setup() {
-  scoreboard.setup();
-
-  // getMacAddress.setup();
+  //scoreboard.setup();
+  getMacAddress.setup();
   //wifiScan.setup();
   //wifiSAP.setup();
   // espNowSender.setup();
   //espNowReceiver.setup();
-  // lcdScreen.setup();
-  // lcdTFT.setup();
+  //lcdScreen.setup();
+  //lcdTFT.setup();
   // Menu.setup();
   //emitter.setup();
   //reciever.setup();
 }
 
 void loop() {
-  scoreboard.loop();
-
+  //scoreboard.loop();
   //wifiScan.loop();
   //wifiSAP.loop();
   // espNowSender.loop();
@@ -50,4 +51,5 @@ void loop() {
   //emitter.loop();
   //reciever.loop();
 }
+
 

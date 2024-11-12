@@ -1,3 +1,4 @@
+
 #include "Arduino.h"
 #include "reciever.h"
 #include <./emitter/espNowSender.h>
@@ -5,25 +6,24 @@
 extern EspNowSender espNowSender;
 Reciever::Reciever() {};
 
-//int pd = 25;     // digital photodiode pin
+// int pd = 25;     // digital photodiode pin
 int sensor = 32; // readings from sensor to analog pin
 int ledPin = 18;
 
-void Reciever :: setup()
+void Reciever ::setup()
 {
     espNowSender.setup();
     Serial.begin(115200);
     pinMode(sensor, INPUT);
     pinMode(ledPin, OUTPUT);
     digitalWrite(ledPin, LOW);
-
 }
 
-void Reciever :: loop()
+void Reciever ::loop()
 {
     espNowSender.loop();
     int sensorValue = analogRead(sensor);
-    //Serial.println(sensorValue);
+    // Serial.println(sensorValue);
     if (sensorValue == 0)
     {
         digitalWrite(ledPin, HIGH);

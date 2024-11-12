@@ -20,10 +20,10 @@ void LCD_TFT::setup()
   tft.fillScreen(ST77XX_BLACK);
 
   // // Display some text
-  // tft.setTextSize(1);
-  // tft.setTextColor(ST77XX_WHITE);
-  // tft.setCursor(0, 0);
-  // tft.println("Hello, World!");
+  tft.setTextSize(1);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setCursor(0, 0);
+  tft.println("Hello, World!");
 
   // // Draw a rectangle
   //tft.drawRect(10, 10, 50, 50, ST77XX_RED);

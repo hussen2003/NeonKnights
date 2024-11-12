@@ -1,0 +1,139 @@
+
+#include <Arduino.h>
+#include <IRremote.hpp> // Include the IRremote library for ESP32
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7735.h>
+#include <SPI.h>
+#include "./LCD_Screen/LCD_TFT.h"
+#include "emitter.h"
+#include "IRSend.hpp"
+
+Emitter::Emitter() {};
+
+// Define the pin for IR LED and the button
+const uint16_t kIrLed = 27; // Pin 27 for IR LED
+const int buttonPin = 32;   // Pin 32 for button to trigger shot
+const int reload_pin = 25;  // Pin for reload button
+
+// LCD screen object
+LCD_TFT lcd;
+
+// Player structure
+struct Player
+{
+    uint8_t health;
+    uint8_t damage;
+    uint8_t playerId;
+    uint8_t teamId;
+    uint8_t kills;
+    uint8_t deaths;
+    bool alive;
+
+    uint32_t encode() const
+    {
+        uint32_t data = 0;
+        data |= (health & 0x7F);
+        data |= (damage & 0x7F) << 7;
+        data |= (playerId & 0x0F) << 14;
+        data |= (teamId & 0x0F) << 18;
+        data |= (kills & 0x7F) << 22;
+        data |= (deaths & 0x7F) << 29;
+        data |= (alive ? 1 : 0) << 31;
+        return data;
+    }
+
+    void printPlayerInfo() const
+    {
+        Serial.print("Health: ");
+        Serial.println(health);
+        Serial.print("Damage: ");
+        Serial.println(damage);
+        Serial.print("Player ID: ");
+        Serial.println(playerId);
+        Serial.print("Team ID: ");
+        Serial.println(teamId);
+        Serial.print("Kills: ");
+        Serial.println(kills);
+        Serial.print("Deaths: ");
+        Serial.println(deaths);
+        Serial.print("Alive: ");
+        Serial.println(alive ? "Yes" : "No");
+        Serial.println();
+    }
+};
+
+int sensor_Value = 0;
+
+void Emitter::setup()
+{
+    // Initialize the IR sender with the specified pin
+    irsend.begin(kIrLed); // Initialize with the IR LED pin (kIrLed)
+
+    // Setup serial communication
+    Serial.begin(115200);
+
+    // Setup the LCD screen
+    lcd.setup();
+    lcd.tft.setTextSize(1);
+    lcd.tft.setTextColor(ST77XX_WHITE);
+    lcd.tft.setCursor(0, 0);
+    lcd.tft.fillScreen(ST77XX_BLACK);
+
+    // Setup buttons
+    pinMode(buttonPin, INPUT_PULLUP);
+    pinMode(reload_pin, INPUT_PULLUP);
+}
+
+void Emitter::loop()
+{
+    if (digitalRead(buttonPin) == LOW)
+    { // If the button is pressed
+        // Create a player object with example data
+        Player player1 = {100, 25, 2, 1, 33, 17, true};
+        player1.printPlayerInfo(); // Print player info to serial
+
+        // Encode the player data into a 32-bit value
+        uint32_t data = player1.encode();
+
+        // Send the encoded data using NEC protocol (standard)
+        uint8_t address = 0x00;        // Standard address (8-bit)
+        uint8_t command = data & 0xFF; // Extract command (low byte of 32-bit data)
+
+        Serial.print(F("Send now: address=0x"));
+        Serial.print(address, HEX);
+        Serial.print(F(", command=0x"));
+        Serial.println(command, HEX);
+
+        Serial.println(F("Sending standard NEC protocol"));
+
+        // Send the NEC signal with address and command using IrSender
+        irsend.sendNEC(address, command, 3); // Send the data 3 times
+
+        // Display "EMITTER SHOT!!!" on the LCD screen
+        lcd.tft.fillScreen(ST77XX_BLACK); // Clear the screen
+        lcd.tft.setCursor(0, 0);
+        lcd.tft.setTextSize(1);
+        lcd.tft.setTextColor(ST77XX_WHITE);
+        lcd.tft.println("EMITTER SHOT!!!");
+        lcd.tft.println("Sending NEC protocol...");
+        lcd.tft.print("Sending encoded data (Hex): ");
+        lcd.tft.println(data, HEX);
+
+        // Simulate a 38kHz IR signal
+        tone(kIrLed, 38000); // Generate 38kHz tone on Pin 27
+        delay(100);          // Keep the tone on for 100ms
+        noTone(kIrLed);      // Stop the tone
+        delay(500);          // Debounce delay
+
+        // Check if the shot hit (for example purposes, this is a placeholder)
+        if (sensor_Value == 0)
+        {
+            lcd.tft.println("SHOT HIT!!");
+        }
+        else
+        {
+            lcd.tft.println("SHOT MISSED!");
+        }
+    }
+}
+
