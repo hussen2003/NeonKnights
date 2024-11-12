@@ -28,8 +28,8 @@ Emitter emitter;
 Reciever reciever;
 
 void setup() {
-  //scoreboard.setup();
-  getMacAddress.setup();
+  scoreboard.setup();
+  //getMacAddress.setup();
   //wifiScan.setup();
   //wifiSAP.setup();
   // espNowSender.setup();
@@ -42,7 +42,7 @@ void setup() {
 }
 
 void loop() {
-  //scoreboard.loop();
+  scoreboard.loop();
   //wifiScan.loop();
   //wifiSAP.loop();
   // espNowSender.loop();

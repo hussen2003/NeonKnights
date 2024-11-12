@@ -4,16 +4,18 @@
 
 EspNowSender::EspNowSender() {};
 
-// REPLACE WITH THE RECEIVER'S MAC Address
-uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
-// Structure example to send data
+// main hub  MAC Address
+uint8_t broadcastAddress[] = {0xFC, 0xB4, 0x67, 0x74, 0x4B, 0xE0};
 // Must match the receiver structure
 typedef struct struct_message
 {
-  int id; // must be unique for each sender board
-  int x;
-  int y;
+  int id; // 1: team1; 2:team2
+  int kills;
+  int death;
+  int reciever1Value;
+  int reciever2Value;
+  int reciever3Value; 
+  int reciever4Value;
 } struct_message;
 
 // Create a struct_message called myData
@@ -29,7 +31,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
-void setup()
+void EspNowSender::setup()
 {
   // Init Serial Monitor
   Serial.begin(115200);
@@ -61,12 +63,10 @@ void setup()
   }
 }
 
-void loop()
+void EspNowSender::loop()
 {
   // Set values to send
   myData.id = 1;
-  myData.x = random(0, 50);
-  myData.y = random(0, 50);
 
   // Send message via ESP-NOW
   esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));

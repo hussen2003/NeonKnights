@@ -235,7 +235,7 @@ String getHTML() {
                 <label for="gamemode" style="font-size: 24px;">Select Game Mode: </label>
                 <select id="gamemode">
                     <option value="deathmatch">Team Deathmatch</option>
-                    <option value="elemination">Team Elimination</option>
+                    <option value="elemination">Target Practice</option>
                     <option value="freeforall">Free For All</option>
                 </select>
 
