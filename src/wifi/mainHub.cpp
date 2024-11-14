@@ -313,6 +313,10 @@ String getHTML()
                 function endgame() {
                     document.querySelector('.gamesetup').classList.remove('hidden');
                     document.querySelector('.scoreboard').classList.add('hidden');
+
+                    fetch("/endgame", {
+                        method: "POST"
+                    }).then(response => response.text()).then(data => console.log("Game ended:", data));
                 }
             </script>
         </head>
@@ -322,9 +326,8 @@ String getHTML()
 
                 <label for="gamemode" style="font-size: 24px;">Select Game Mode: </label>
                 <select id="gamemode">
-                    <option value="deathmatch">Team Deathmatch</option>
-                    <option value="elemination">Target Practice</option>
                     <option value="freeforall">Free For All</option>
+                    <option value="targetpractice">Target Practice</option>
                 </select>
 
                 <div class="teambox">
@@ -502,6 +505,7 @@ void UpdateWebpage()
     json += "\"player1kills\":" + String(Player1Kills) + ",";
     json += "\"player1deaths\":" + String(Player1Deaths) + ",";
     json += "\"t2n\":\"" + Team2Name + "\",";
+
     json += "\"p2n\":\"" + Player2Name + "\",";
     json += "\"player2score\":" + String(Player2Score) + ",";
     json += "\"player2kills\":" + String(Player2Kills) + ",";
@@ -576,6 +580,7 @@ void EspNowLoop()
             //Serial.printf("Error sending board data to vest %d\n", i + 1);
         }
     }
+    delay(100);
 
 }
 
@@ -668,6 +673,13 @@ void MainHub::setup()
         Serial.println("Gamemode: " + Gamemode);
         request->send(200, "text/plain", "Data received"); });
 
+    Server.on("/endgame", HTTP_POST, [](AsyncWebServerRequest *request)
+              {
+                  gameData.hasGameStarted = false; // Set the game end flag
+                  Serial.println("Game has ended");
+                  request->send(200, "text/plain", "Game ended"); // Send confirmation response
+              });
+
     // Start server
     Server.begin();
 
@@ -710,10 +722,16 @@ void sendColorToVest(int player, const char *color)
     }
 }
 
+// int hitCounter = 0;           // Tracks successful hits
+// int missCounter = 0;          // Tracks misses
+// double accuracy = 0.0;        // Tracks the accuracy percentage
+// unsigned long timerStart = 0; // Start time for 10-second timer
+// int currentTarget = 0;        // Tracks which receiver (1, 2, or 3) is the current target
+// bool isTargetHit = false;     // Tracks if the current target has been hit
+
 void MainHub::loop()
 {
     EspNowLoop();   // Handles sending and receiving via ESP-NOW
-    
 
     if (Gamemode == "freeforall")
     {
@@ -778,4 +796,56 @@ void MainHub::loop()
         Serial.println("Player 1 Kills: " + String(Player1Kills));
         Serial.println("Player 2 Kills: " + String(Player2Kills));
     }
+
+    // if (Gamemode == "targetpractice")
+    // {
+
+    //     // If a target has not been selected, randomly choose a target (1, 2, or 3)
+    //     if (currentTarget == 0 || isTargetHit)
+    //     {
+    //         currentTarget = random(1, 4); // Randomly select 1, 2, or 3
+    //         Serial.println("New target: Receiver " + String(currentTarget));
+    //         isTargetHit = false;   // Reset the target hit flag
+    //         timerStart = millis(); // Reset the timer for the new target
+    //     }
+
+    //     // Check if the randomly selected receiver was hit
+    //     if ((currentTarget == 1 && board1.reciever1Value == 0) ||
+    //         (currentTarget == 2 && board1.reciever2Value == 0) ||
+    //         (currentTarget == 3 && board1.reciever3Value == 0))
+    //     {
+    //         hitCounter++; // Target was hit
+    //         Serial.println("Target hit!");
+    //         isTargetHit = true; // Mark the target as hit
+    //     }
+
+    //     // Check if the timer has exceeded 10 seconds or another receiver was hit
+    //     if (millis() - timerStart >= 10000 ||
+    //         (board1.reciever1Value == 0 && currentTarget != 1) ||
+    //         (board1.reciever2Value == 0 && currentTarget != 2) ||
+    //         (board1.reciever3Value == 0 && currentTarget != 3))
+    //     {
+
+    //         if (!isTargetHit)
+    //         { // If the target was not hit in time or another receiver was hit
+    //             missCounter++;
+    //             Serial.println("Target missed!");
+    //         }
+
+    //         // After 10 seconds or a miss, reset and pick a new target
+    //         currentTarget = 0; // Reset target to select a new one
+    //     }
+
+    //     // Calculate accuracy
+    //     if (hitCounter + missCounter > 0)
+    //     {
+    //         accuracy = ((double)hitCounter / (hitCounter + missCounter)) * 100;
+    //     }
+
+    //     // Display stats for debugging
+    //     Serial.println("Hits: " + String(hitCounter) + " | Misses: " + String(missCounter) + " | Accuracy: " + String(accuracy, 2) + "%");
+
+    //     // Optional: Update webpage with hit/miss stats and accuracy
+    //     UpdateWebpage();
+    // }
 }
