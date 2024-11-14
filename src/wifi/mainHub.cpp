@@ -114,13 +114,13 @@ String Team2Name = "";
 String Team2Color = "";
 String Player2Name = "";
 
-int Player1Score = 0;
 int Player1Kills = 0;
 int Player1Deaths = 0;
+double Player1kd = Player1Kills/Player1Deaths;
 
-int Player2Score = 0;
 int Player2Kills = 0;
 int Player2Deaths = 0;
+double Player2kd = Player2Kills/Player2Deaths;
 
 
 // Function to return HTML content
@@ -341,7 +341,6 @@ String getHTML()
                         <div class="teamitem">
                             <label for="team1color">Select Team Color: </label>
                             <select id="team1color">
-                                <option value="red">Red</option>
                                 <option value="blue">Blue</option>
                                 <option value="green">Green</option>
                                 <option value="yellow">Yellow</option>
@@ -375,7 +374,6 @@ String getHTML()
                             <label for="team2color">Select Team Color: </label>
                             <select id="team2color">
                                 <option value="blue">Blue</option>
-                                <option value="red">Red</option>
                                 <option value="green">Green</option>
                                 <option value="yellow">Yellow</option>
                                 <option value="purple">Purple</option>
@@ -406,10 +404,9 @@ String getHTML()
 
                 <div class="teambox">
                 
-                    <div class="team1">
+                    <div class="team1" style="background-color: )rawliteral" + Team1Color + R"rawliteral( ;">
                         <div class="stat" id="t1n">
-                            )rawliteral" +
-                  Team1Name + R"rawliteral(
+                            )rawliteral" + Team1Name + R"rawliteral(
                         </div>
 
                         <div class="statbox">
@@ -429,28 +426,23 @@ String getHTML()
 
                         <div class="statbox">
                             <div class="stat" id="p1n">
-                                )rawliteral" +
-                  Player1Name + R"rawliteral(
-                            </div>
-                            <div class="stat" id="player1score">
-                                )rawliteral" +
-                  Player1Score + R"rawliteral(
+                                )rawliteral" + Player1Name + R"rawliteral(
                             </div>
                             <div class="stat" id="player1kills">
-                                )rawliteral" +
-                  Player1Kills + R"rawliteral(
+                                )rawliteral" + Player1Kills + R"rawliteral(
                             </div>
                             <div class="stat" id="player1deaths">
-                                )rawliteral" +
-                  Player1Deaths + R"rawliteral(
+                                )rawliteral" + Player1Deaths + R"rawliteral(
+                            </div>
+                            <div class="stat" id="player1score">
+                                )rawliteral" + Player1kd + R"rawliteral(
                             </div>
                         </div>
                     </div>
 
-                    <div class="team2">
+                    <div class="team2" style="background-color: )rawliteral" + Team2Color + R"rawliteral( ;">
                         <div class="stat" id="t2n">
-                            )rawliteral" +
-                  Team2Name + R"rawliteral(
+                            )rawliteral" + Team2Name + R"rawliteral(
                         </div>
 
                         <div class="statbox">
@@ -470,20 +462,16 @@ String getHTML()
 
                         <div class="statbox">
                             <div class="stat"  id="p2n">
-                                )rawliteral" +
-                  Player2Name + R"rawliteral(
-                            </div>
-                            <div class="stat" id="player2score">
-                                )rawliteral" +
-                  Player2Score + R"rawliteral(
+                                )rawliteral" + Player2Name + R"rawliteral(
                             </div>
                             <div class="stat" id="player2kills">
-                                )rawliteral" +
-                  Player2Kills + R"rawliteral(
+                                )rawliteral" + Player2Kills + R"rawliteral(
                             </div>
                             <div class="stat" id="player2deaths">
-                                )rawliteral" +
-                  Player2Deaths + R"rawliteral(
+                                )rawliteral" + Player2Deaths + R"rawliteral(
+                            </div>
+                            <div class="stat" id="kd">
+                                )rawliteral" + Player2kd + R"rawliteral(
                             </div>
                         </div>
                     </div>
@@ -501,13 +489,13 @@ void UpdateWebpage()
     String json = "{";
     json += "\"t1n\":\"" + Team1Name + "\",";
     json += "\"p1n\":\"" + Player1Name + "\",";
-    json += "\"player1score\":" + String(Player1Score) + ",";
+    json += "\"player1score\":" + String(Player1kd) + ",";
     json += "\"player1kills\":" + String(Player1Kills) + ",";
     json += "\"player1deaths\":" + String(Player1Deaths) + ",";
     json += "\"t2n\":\"" + Team2Name + "\",";
 
     json += "\"p2n\":\"" + Player2Name + "\",";
-    json += "\"player2score\":" + String(Player2Score) + ",";
+    json += "\"player2score\":" + String(Player2kd) + ",";
     json += "\"player2kills\":" + String(Player2Kills) + ",";
     json += "\"player2deaths\":" + String(Player2Deaths);
     json += "}";
