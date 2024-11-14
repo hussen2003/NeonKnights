@@ -8,9 +8,9 @@
 MainHub::MainHub() {};
 
 // List of vests' MAC Addresses
-uint8_t vestMacAddresses[][6] = {
-    {0xD0, 0xEF, 0x76, 0x15, 0x4E, 0x20}, // First vest MAC address
-    {0xFC, 0xB4, 0x67, 0x74, 0x4B, 0xE0}  // Second vest MAC address (example)
+uint8_t vestMacAddresses[2][6] = {
+    {0xD0, 0xEF, 0x76, 0x14, 0xf6, 0x1C}, // First vest MAC address
+    {0xD0, 0xEF, 0x76, 0x15, 0x4E, 0x20}  // Second vest MAC address (example)
 };
 
 typedef struct input_data
@@ -50,13 +50,13 @@ struct_message boardsStruct[2] = {board1, board2};
 void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
     char macStr[18];
-    //Serial.print("Packet received from: ");
+    // Serial.print("Packet received from: ");
     snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
              mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-    //Serial.println(macStr);
+    // Serial.println(macStr);
 
     memcpy(&myData, incomingData, sizeof(myData));
-    //Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
+    // Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
 
     // Update the structures with the new incoming data
     if (myData.id == 1)
@@ -79,17 +79,14 @@ void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len
         board2.reciever2Value = myData.reciever2Value;
         board2.reciever3Value = myData.reciever3Value;
         board2.reciever4Value = myData.reciever4Value;
-
     }
-
 }
-
 
 // Callback function when data is sent
 void OnDataSentHub(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-    //Serial.print("\r\nLast Packet Send Status:\t");
-    //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    // Serial.print("\r\nLast Packet Send Status:\t");
+    // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
 // Replace with your network credentials
@@ -104,7 +101,7 @@ String Gamemode = "";
 
 int Player1Health;
 int Player2Health;
-int Player1Damage;  
+int Player1Damage;
 int Player2Damage;
 String Team1Name = "test";
 String Team1Color = "";
@@ -116,12 +113,11 @@ String Player2Name = "";
 
 int Player1Kills = 0;
 int Player1Deaths = 0;
-double Player1kd = Player1Kills/Player1Deaths;
+double Player1kd = 0.0;
 
 int Player2Kills = 0;
 int Player2Deaths = 0;
-double Player2kd = Player2Kills/Player2Deaths;
-
+double Player2kd = 0.0;
 
 // Function to return HTML content
 String getHTML()
@@ -404,9 +400,11 @@ String getHTML()
 
                 <div class="teambox">
                 
-                    <div class="team1" style="background-color: )rawliteral" + Team1Color + R"rawliteral( ;">
+                    <div class="team1" style="background-color: )rawliteral" +
+                  Team1Color + R"rawliteral( ;">
                         <div class="stat" id="t1n">
-                            )rawliteral" + Team1Name + R"rawliteral(
+                            )rawliteral" +
+                  Team1Name + R"rawliteral(
                         </div>
 
                         <div class="statbox">
@@ -426,23 +424,29 @@ String getHTML()
 
                         <div class="statbox">
                             <div class="stat" id="p1n">
-                                )rawliteral" + Player1Name + R"rawliteral(
+                                )rawliteral" +
+                  Player1Name + R"rawliteral(
                             </div>
                             <div class="stat" id="player1kills">
-                                )rawliteral" + Player1Kills + R"rawliteral(
+                                )rawliteral" +
+                  Player1Kills + R"rawliteral(
                             </div>
                             <div class="stat" id="player1deaths">
-                                )rawliteral" + Player1Deaths + R"rawliteral(
+                                )rawliteral" +
+                  Player1Deaths + R"rawliteral(
                             </div>
                             <div class="stat" id="player1score">
-                                )rawliteral" + Player1kd + R"rawliteral(
+                                )rawliteral" +
+                  Player1kd + R"rawliteral(
                             </div>
                         </div>
                     </div>
 
-                    <div class="team2" style="background-color: )rawliteral" + Team2Color + R"rawliteral( ;">
+                    <div class="team2" style="background-color: )rawliteral" +
+                  Team2Color + R"rawliteral( ;">
                         <div class="stat" id="t2n">
-                            )rawliteral" + Team2Name + R"rawliteral(
+                            )rawliteral" +
+                  Team2Name + R"rawliteral(
                         </div>
 
                         <div class="statbox">
@@ -462,16 +466,20 @@ String getHTML()
 
                         <div class="statbox">
                             <div class="stat"  id="p2n">
-                                )rawliteral" + Player2Name + R"rawliteral(
+                                )rawliteral" +
+                  Player2Name + R"rawliteral(
                             </div>
                             <div class="stat" id="player2kills">
-                                )rawliteral" + Player2Kills + R"rawliteral(
+                                )rawliteral" +
+                  Player2Kills + R"rawliteral(
                             </div>
                             <div class="stat" id="player2deaths">
-                                )rawliteral" + Player2Deaths + R"rawliteral(
+                                )rawliteral" +
+                  Player2Deaths + R"rawliteral(
                             </div>
                             <div class="stat" id="kd">
-                                )rawliteral" + Player2kd + R"rawliteral(
+                                )rawliteral" +
+                  Player2kd + R"rawliteral(
                             </div>
                         </div>
                     </div>
@@ -561,31 +569,62 @@ void EspNowLoop()
 
         if (result == ESP_OK)
         {
-            //Serial.printf("Board data sent successfully to vest %d\n", i + 1);
+            // Serial.printf("Board data sent successfully to vest %d\n", i + 1);
         }
         else
         {
-            //Serial.printf("Error sending board data to vest %d\n", i + 1);
+            // Serial.printf("Error sending board data to vest %d\n", i + 1);
         }
     }
     delay(100);
+}
 
+void sendColorToVest(int player, const char *color)
+{
+    // Update the color in gameData
+    strncpy(gameData.color, color, sizeof(gameData.color) - 1); // Set the color (e.g., "white")
+    gameData.color[sizeof(gameData.color) - 1] = '\0';          // Ensure null-termination
+
+    // Send the updated color data to the correct vest based on the player
+    if (player == 1)
+    {
+        // Send to Player 1's vest (index 0)
+        esp_err_t result = esp_now_send(vestMacAddresses[0], (uint8_t *)&gameData, sizeof(gameData));
+        if (result == ESP_OK)
+        {
+            // Serial.printf("Color data sent to vest 1: %s\n", gameData.color);
+        }
+        else
+        {
+            // Serial.printf("Error sending color data to vest 1\n");
+        }
+    }
+    else if (player == 2)
+    {
+        // Send to Player 2's vest (index 1)
+        esp_err_t result = esp_now_send(vestMacAddresses[1], (uint8_t *)&gameData, sizeof(gameData));
+        if (result == ESP_OK)
+        {
+            // Serial.printf("Color data sent to vest 2: %s\n", gameData.color);
+        }
+        else
+        {
+            // Serial.printf("Error sending color data to vest 2\n");
+        }
+    }
 }
 
 void sendGameData()
 {
-    // Fill game data with example values
-    gameData.hasGameStarted = true;
-    // strcpy(gameData.color, "green");
-
     // Send the game data to each vest
+    gameData.hasGameStarted = true;
     for (int i = 0; i < 2; i++)
     {
         esp_err_t result = esp_now_send(vestMacAddresses[i], (uint8_t *)&gameData, sizeof(gameData));
 
         if (result == ESP_OK)
         {
-            //Serial.printf("Game data sent successfully to vest %d\n", i + 1);
+            // Serial.printf("Game data sent successfully to vest %d\n", i + 1);
         }
         else
         {
@@ -604,7 +643,7 @@ void MainHub::setup()
     WiFi.mode(WIFI_AP_STA); // Station mode for ESP-NOW compatibility
 
     // Set up the access point
-    WiFi.softAP(Ssid, Password);
+    WiFi.softAP(Ssid, Password); // The fourth argument (0) makes the SSID visible
     Serial.println("Access Point started");
     Serial.print("IP address: ");
     Serial.println(WiFi.softAPIP());
@@ -670,44 +709,8 @@ void MainHub::setup()
 
     // Start server
     Server.begin();
-
-    gameData.hasGameStarted = true;
+    
     EspNowSetup();
-}
-
-void sendColorToVest(int player, const char *color)
-{
-    // Update the color in gameData
-    strncpy(gameData.color, color, sizeof(gameData.color) - 1); // Set the color (e.g., "white")
-    gameData.color[sizeof(gameData.color) - 1] = '\0';          // Ensure null-termination
-
-    // Send the updated color data to the correct vest based on the player
-    if (player == 1)
-    {
-        // Send to Player 1's vest (index 0)
-        esp_err_t result = esp_now_send(vestMacAddresses[0], (uint8_t *)&gameData, sizeof(gameData));
-        if (result == ESP_OK)
-        {
-            //Serial.printf("Color data sent to vest 1: %s\n", gameData.color);
-        }
-        else
-        {
-            //Serial.printf("Error sending color data to vest 1\n");
-        }
-    }
-    else if (player == 2)
-    {
-        // Send to Player 2's vest (index 1)
-        esp_err_t result = esp_now_send(vestMacAddresses[1], (uint8_t *)&gameData, sizeof(gameData));
-        if (result == ESP_OK)
-        {
-            //Serial.printf("Color data sent to vest 2: %s\n", gameData.color);
-        }
-        else
-        {
-            //Serial.printf("Error sending color data to vest 2\n");
-        }
-    }
 }
 
 // int hitCounter = 0;           // Tracks successful hits
@@ -716,10 +719,30 @@ void sendColorToVest(int player, const char *color)
 // unsigned long timerStart = 0; // Start time for 10-second timer
 // int currentTarget = 0;        // Tracks which receiver (1, 2, or 3) is the current target
 // bool isTargetHit = false;     // Tracks if the current target has been hit
+void updateKD()
+{
+    if (Player1Deaths != 0)
+    {
+        Player1kd = Player1Kills / Player1Deaths;
+    }
+    else
+    {
+        Player1kd = Player1Kills;
+    }
+
+    if (Player2Deaths != 0)
+    {
+        Player2kd = Player2Kills / Player2Deaths;
+    }
+    else
+    {
+        Player2kd = Player2Kills;
+    }
+}
 
 void MainHub::loop()
 {
-    EspNowLoop();   // Handles sending and receiving via ESP-NOW
+    EspNowLoop(); // Handles sending and receiving via ESP-NOW
 
     if (Gamemode == "freeforall")
     {
@@ -742,29 +765,30 @@ void MainHub::loop()
         // Check if Player 1 has died
         if (Player1Health <= 0)
         {
-            Player1Health = 0;           // Make sure health doesn't go negative
-            Player2Kills++;              // Player 2 gets a kill
-            Player1Deaths++;             // Player 1 has died
-            //sendColorToVest(1, "white"); // Player 1 is dead, update Player 1's vest color to white
-            delay(5000);                 // Wait for 5 seconds before respawning Player 1
-
-            // Respawn Player 1 by resetting their health
+            Player1Health = 0; // Make sure health doesn't go negative
+            Player2Kills++;    // Player 2 gets a kill
+            Player1Deaths++;   // Player 1 has died
+            // sendColorToVest(1, "white"); // Player 1 is dead, update Player 1's vest color to white
+            delay(5000); // Wait for 5 seconds before respawning Player 1
+            // updateKD();
+            //  Respawn Player 1 by resetting their health
             Player1Health = Player1InitialHealth; // Restore original health for Player 1
-            //sendColorToVest(1, "green");          // Change Player 1's vest color back to green
+            // sendColorToVest(1, "green");          // Change Player 1's vest color back to green
         }
 
         // Check if Player 2 has died
         if (Player2Health <= 0)
         {
-            Player2Health = 0;           // Make sure health doesn't go negative
-            Player1Kills++;              // Player 1 gets a kill
-            Player2Deaths++;             // Player 2 has died
-            //sendColorToVest(2, "white"); // Player 2 is dead, update Player 2's vest color to white
-            delay(5000);                 // Wait for 5 seconds before respawning Player 2
+            Player2Health = 0; // Make sure health doesn't go negative
+            Player1Kills++;    // Player 1 gets a kill
+            Player2Deaths++;   // Player 2 has died
+            // updateKD();
+            //  sendColorToVest(2, "white"); // Player 2 is dead, update Player 2's vest color to white
+            delay(5000); // Wait for 5 seconds before respawning Player 2
 
             // Respawn Player 2 by resetting their health
             Player2Health = Player2InitialHealth; // Restore original health for Player 2
-            //sendColorToVest(2, "green");          // Change Player 2's vest color back to green
+            // sendColorToVest(2, "green");          // Change Player 2's vest color back to green
         }
 
         // Update the webpage with the latest stats
@@ -778,7 +802,12 @@ void MainHub::loop()
 
         Serial.println();
         // Debugging output
-        Serial.println("Gamemode: " + Gamemode);
+
+        Serial.print("Gamemode: " + Gamemode);
+        Serial.print("player 1 color: " + Team1Color);
+        Serial.print("player 2 color: " + Team2Color);
+        Serial.println();
+
         Serial.println("Player 1 Health: " + String(Player1Health));
         Serial.println("Player 2 Health: " + String(Player2Health));
         Serial.println("Player 1 Kills: " + String(Player1Kills));

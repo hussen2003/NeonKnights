@@ -6,7 +6,8 @@
 Reciever::Reciever() {}
 
 // RECEIVER'S MAC Address
-uint8_t broadcastAddress[] = {0xFC, 0xB4, 0x67, 0x74, 0x4B, 0xE0};
+//uint8_t broadcastAddress[] = {0xFC, 0xB4, 0x67, 0x74, 0x4B, 0xE0};
+uint8_t broadcastAddress[] = {0xfc, 0xB4, 0x67, 0x72, 0x7c, 0x94};
 
 // Structure to send data (same as before)
 typedef struct struct_message
@@ -209,19 +210,11 @@ void Reciever::loop()
     {
         digitalWrite(led1_R, HIGH);
     }
-    else if (reciever1Value == 1)
-    {
-        digitalWrite(led1_R, LOW);
-    }
 
     // Receiver 2
     if (reciever2Value == 0)
     {
         digitalWrite(led2_R, HIGH);
-    }
-    else if (reciever2Value == 1)
-    {
-        digitalWrite(led2_R, LOW);
     }
 
     // Receiver 3
@@ -229,36 +222,63 @@ void Reciever::loop()
     {
         digitalWrite(led3_R, HIGH);
     }
-    else if (reciever3Value == 1)
-    {
-        digitalWrite(led3_R, LOW);
-    }
 
     // Receiver 4
     if (reciever4Value == 0)
     {
         digitalWrite(led4_R, HIGH);
     }
-    else if (reciever4Value == 1)
-    {
-        digitalWrite(led4_R, LOW);
-    }
 
-    if (receivedData.color == "white")
+    if (strcmp(receivedData.color,"blue"))
+    {
+        digitalWrite(led1_B, HIGH);
+        digitalWrite(led2_B, HIGH);
+        digitalWrite(led3_B, HIGH);
+        digitalWrite(led4_B, HIGH);
+    }
+    if (strcmp(receivedData.color, "green"))
+    {
+        digitalWrite(led1_B, HIGH);
+        digitalWrite(led2_B, HIGH);
+        digitalWrite(led3_B, HIGH);
+        digitalWrite(led4_B, HIGH);
+    }
+    if (strcmp(receivedData.color,"yellow"))
     {
         digitalWrite(led1_R, HIGH);
-        digitalWrite(led1_G, HIGH);
-        digitalWrite(led1_B, HIGH);
-
         digitalWrite(led2_R, HIGH);
-        digitalWrite(led2_G, HIGH);
-        digitalWrite(led2_B, HIGH);
-
         digitalWrite(led3_R, HIGH);
-        digitalWrite(led3_G, HIGH);
-        digitalWrite(led3_B, HIGH);
-
         digitalWrite(led4_R, HIGH);
+
+        digitalWrite(led1_G, HIGH);
+        digitalWrite(led2_G, HIGH);
+        digitalWrite(led3_G, HIGH);
         digitalWrite(led4_G, HIGH);
     }
+    if (strcmp(receivedData.color,"purple"))
+    {
+        digitalWrite(led1_R, HIGH);
+        digitalWrite(led2_R, HIGH);
+        digitalWrite(led3_R, HIGH);
+        digitalWrite(led4_R, HIGH);
+
+        digitalWrite(led1_B, HIGH);
+        digitalWrite(led2_B, HIGH);
+        digitalWrite(led3_B, HIGH);
+        digitalWrite(led4_B, HIGH);
+    }
+    if (strcmp(receivedData.color, "cyan"))
+    {
+        digitalWrite(led1_B, HIGH);
+        digitalWrite(led2_B, HIGH);
+        digitalWrite(led3_B, HIGH);
+        digitalWrite(led4_B, HIGH);
+
+        digitalWrite(led1_G, HIGH);
+        digitalWrite(led2_G, HIGH);
+        digitalWrite(led3_G, HIGH);
+        digitalWrite(led4_G, HIGH);
+    }
+
+    Serial.printf("Color: %s", receivedData.color);
 }
