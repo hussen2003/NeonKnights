@@ -102,7 +102,6 @@ void espNowLoop()
     {
         Serial.println("Error sending the data");
     }
-    delay(100);
 }
 
 const int reciever1 = 39;

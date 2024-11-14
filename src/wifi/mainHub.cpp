@@ -66,6 +66,11 @@ void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len
         board1.reciever2Value = myData.reciever2Value;
         board1.reciever3Value = myData.reciever3Value;
         board1.reciever4Value = myData.reciever4Value;
+
+        board2.reciever1Value = 1;
+        board2.reciever2Value = 1;
+        board2.reciever3Value = 1;
+        board2.reciever4Value = 1;
     }
     else if (myData.id == 2)
     {
@@ -74,15 +79,11 @@ void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len
         board2.reciever2Value = myData.reciever2Value;
         board2.reciever3Value = myData.reciever3Value;
         board2.reciever4Value = myData.reciever4Value;
+
     }
 
-    // Debugging: Print received values
-    // Serial.printf("Reciever 1: %d \n", (myData.id == 1) ? board1.reciever1Value : board2.reciever1Value);
-    // Serial.printf("Reciever 2: %d \n", (myData.id == 1) ? board1.reciever2Value : board2.reciever2Value);
-    // Serial.printf("Reciever 3: %d \n", (myData.id == 1) ? board1.reciever3Value : board2.reciever3Value);
-    // Serial.printf("Reciever 4: %d \n", (myData.id == 1) ? board1.reciever4Value : board2.reciever4Value);
-    // Serial.println();
 }
+
 
 // Callback function when data is sent
 void OnDataSentHub(const uint8_t *mac_addr, esp_now_send_status_t status)
@@ -120,6 +121,7 @@ int Player1Deaths = 0;
 int Player2Score = 0;
 int Player2Kills = 0;
 int Player2Deaths = 0;
+
 
 // Function to return HTML content
 String getHTML()
@@ -575,13 +577,12 @@ void EspNowLoop()
         }
     }
 
-    delay(200); // Delay for a while before sending data again
 }
 
 void sendGameData()
 {
     // Fill game data with example values
-    // gameData.hasGameStarted = true;
+    gameData.hasGameStarted = true;
     // strcpy(gameData.color, "green");
 
     // Send the game data to each vest
@@ -599,6 +600,8 @@ void sendGameData()
         }
     }
 }
+int Player1InitialHealth; // Initial health value for Player 1
+int Player2InitialHealth; // Initial health value for Player 2
 
 void MainHub::setup()
 {
@@ -639,8 +642,11 @@ void MainHub::setup()
             Team1Color = request->getParam("team1color", true)->value();
         if (request->hasParam("player1name", true)) 
             Player1Name = request->getParam("player1name", true)->value();
-        if (request->hasParam("player1health", true)) 
-            Player1Health = request->getParam("player1health", true)->value().toInt();  // Convert to int
+        if (request->hasParam("player1health", true))
+        {
+            Player1Health = request->getParam("player1health", true)->value().toInt();        // Convert to int
+            Player1InitialHealth = request->getParam("player1health", true)->value().toInt(); // Convert to int
+        }  
         if (request->hasParam("player1damage", true)) 
             Player1Damage = request->getParam("player1damage", true)->value().toInt();  // Convert to int
         if (request->hasParam("team2name", true)) 
@@ -650,7 +656,11 @@ void MainHub::setup()
         if (request->hasParam("player2name", true)) 
             Player2Name = request->getParam("player2name", true)->value();
         if (request->hasParam("player2health", true)) 
-            Player2Health = request->getParam("player2health", true)->value().toInt();  // Convert to int
+        {
+            Player2Health = request->getParam("player2health", true)->value().toInt(); // Convert to int
+            Player2InitialHealth = request->getParam("player2health", true)->value().toInt(); // Convert to int
+        }
+            
         if (request->hasParam("player2damage", true)) 
             Player2Damage = request->getParam("player2damage", true)->value().toInt();  // Convert to int
 
@@ -699,15 +709,16 @@ void sendColorToVest(int player, const char *color)
         }
     }
 }
-int i=0;
 
 void MainHub::loop()
 {
     EspNowLoop();   // Handles sending and receiving via ESP-NOW
-    sendGameData(); // Send game data to vests
+    
 
     if (Gamemode == "freeforall")
     {
+        sendGameData(); // Send game data to vests
+
         // Handle Player 1's board data (vest 1)
         if (board1.reciever1Value == 0 || board1.reciever2Value == 0 || board1.reciever3Value == 0 || board1.reciever4Value == 0)
         {
@@ -728,8 +739,12 @@ void MainHub::loop()
             Player1Health = 0;           // Make sure health doesn't go negative
             Player2Kills++;              // Player 2 gets a kill
             Player1Deaths++;             // Player 1 has died
-            sendColorToVest(1, "white"); // Player 1 is dead, update Player 1's vest color to white
-            delay(5000);                 // Wait for 5 seconds before continuing
+            //sendColorToVest(1, "white"); // Player 1 is dead, update Player 1's vest color to white
+            delay(5000);                 // Wait for 5 seconds before respawning Player 1
+
+            // Respawn Player 1 by resetting their health
+            Player1Health = Player1InitialHealth; // Restore original health for Player 1
+            //sendColorToVest(1, "green");          // Change Player 1's vest color back to green
         }
 
         // Check if Player 2 has died
@@ -738,15 +753,24 @@ void MainHub::loop()
             Player2Health = 0;           // Make sure health doesn't go negative
             Player1Kills++;              // Player 1 gets a kill
             Player2Deaths++;             // Player 2 has died
-            sendColorToVest(2, "white"); // Player 2 is dead, update Player 2's vest color to white
-            delay(5000);                 // Wait for 5 seconds before continuing
+            //sendColorToVest(2, "white"); // Player 2 is dead, update Player 2's vest color to white
+            delay(5000);                 // Wait for 5 seconds before respawning Player 2
+
+            // Respawn Player 2 by resetting their health
+            Player2Health = Player2InitialHealth; // Restore original health for Player 2
+            //sendColorToVest(2, "green");          // Change Player 2's vest color back to green
         }
 
-        Player1Kills = i++;
         // Update the webpage with the latest stats
         UpdateWebpage();
 
-        
+        // Debugging: Print received values
+        Serial.printf("Vest 1 Reciever 1: %d Vest 2 Reciever 1: %d\n", board1.reciever1Value, board2.reciever1Value);
+        Serial.printf("Vest 1 Reciever 2: %d Vest 2 Reciever 2: %d\n", board1.reciever2Value, board2.reciever2Value);
+        Serial.printf("Vest 1 Reciever 3: %d Vest 2 Reciever 3: %d\n", board1.reciever3Value, board2.reciever3Value);
+        Serial.printf("Vest 1 Reciever 4: %d Vest 2 Reciever 4: %d\n", board1.reciever4Value, board2.reciever4Value);
+
+        Serial.println();
         // Debugging output
         Serial.println("Gamemode: " + Gamemode);
         Serial.println("Player 1 Health: " + String(Player1Health));
@@ -754,6 +778,4 @@ void MainHub::loop()
         Serial.println("Player 1 Kills: " + String(Player1Kills));
         Serial.println("Player 2 Kills: " + String(Player2Kills));
     }
-
-    delay(100); // Optional delay to prevent excessive looping
 }
