@@ -712,14 +712,14 @@ void MainHub::loop()
         if (board1.reciever1Value == 0 || board1.reciever2Value == 0 || board1.reciever3Value == 0 || board1.reciever4Value == 0)
         {
             // Player 1 is hit (any receiver value is 0)
-            Player1Health -= Player1Damage;
+            Player1Health -= Player2Damage;
         }
 
         // Handle Player 2's board data (vest 2)
         if (board2.reciever1Value == 0 || board2.reciever2Value == 0 || board2.reciever3Value == 0 || board2.reciever4Value == 0)
         {
             // Player 2 is hit (any receiver value is 0)
-            Player2Health -= Player2Damage;
+            Player2Health -= Player1Damage;
         }
 
         // Check if Player 1 has died
