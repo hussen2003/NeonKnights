@@ -4,190 +4,56 @@
 #include <Adafruit_ST7735.h>
 #include <SPI.h>
 #include <./LCD_Screen/LCD_TFT.h>
-#include <./reciever/espNowReceiver.h>
+//#include <./reciever/espNowReceiver.h>
 
 Emitter::Emitter() {};
-// // LCD_TFT lcd;
-// // extern EspNowReceiver espNowReceiver;
-
-// // const int pwmPin = 25; // Replace with your desired PWM pin
-// // const int ledPin = 13;
-// // const int frequency = 38000; // 38kHz frequency
-// // const int buttonPin = 32;
-// // const int reload_pin = 33;
-
-// void Emitter ::setup()
-// {
-
-//     //espNowReceiver.setup();
-//     // lcd.setup();
-
-//     // ledcSetup(0, frequency, 8); // Channel 0, frequency, resolution (8 bits)
-//     // ledcAttachPin(pwmPin, 0);   // Attach the PWM pin to the LEDC channel
-
-//     // lcd.tft.setTextSize(1);
-//     // lcd.tft.setTextColor(ST77XX_WHITE);
-//     // lcd.tft.setCursor(0, 0);
-//     // pinMode(pwmPin, OUTPUT);
-//     // pinMode(ledPin, OUTPUT);
-//     // digitalWrite(ledPin, LOW);
-//     // pinMode(buttonPin, INPUT_PULLUP);
-//     // pinMode(reload_pin, INPUT_PULLUP);
-// }
-
-// //int sensor_Value;
-
-// void Emitter::loop()
-// {
-//     //espNowReceiver.loop();
-//     // if (digitalRead(buttonPin) == LOW) // Button pressed
-//     // {
-
-//     //     // Send shot signal
-//     //     tone(pwmPin, frequency); // Generate a 38kHz tone
-//     //     delay(100);              // Keep tone for 100ms
-//     //     noTone(pwmPin);          // Stop the tone
-//     //     delay(500);              // Debounce delay
-
-//     //     // Immediately check the receiver value
-//     //     //sensor_Value = espNowReceiver.getButtonValue();
-
-//     //     // Display shot status
-//     //     lcd.tft.fillScreen(ST77XX_BLACK); // Clear the screen before printing
-//     //     lcd.tft.setCursor(0, 0);
-//     //     lcd.tft.setTextSize(1);
-//     //     lcd.tft.setTextColor(ST77XX_WHITE);
-//     //     lcd.tft.println("EMITTER SHOT!!!");
-
-//     //     if (digitalRead(buttonPin) == 0) // Check if shot hit
-//     //     {
-//     //         lcd.tft.println("SHOT HIT!!");
-//     //     }
-//     //     else
-//     //     {
-//     //         lcd.tft.println("SHOT MISSED!");
-//     //     }
-
-//     //     // Serial print for debugging
-//     //     // Serial.print("Receiver Value: ");
-//     //     // Serial.println(sensor_Value);
-//     // }
-
-//     // // Serial.print("Receiver Value: ");
-//     // // Serial.println(sensor_Value);
-// }
-
-const int button = 32;
+const int trigger = 32;
 const int led = 13;
-const int haptic = 26;
+const int haptic1 = 26;
+const int haptic2 = 4;
+
 const int pwmPin = 25;
 const int frequency = 38000; // 38kHz frequency
-
-int sensor_Value;
-
-LCD_TFT lcd;
-extern EspNowReceiver espNowReceiver;
+const int ledChannel = 0;    // Channel 0 for LEDC PWM
+const int resolution = 8;    // 8-bit resolution (0-255)
 
 void Emitter::setup()
 {
     Serial.begin(115200);
-    pinMode(button, INPUT_PULLUP);
+    pinMode(trigger, INPUT_PULLUP);
     pinMode(led, OUTPUT);
-    digitalWrite(led, LOW);
-    pinMode(haptic, OUTPUT);
+    pinMode(haptic1, OUTPUT);
+    pinMode(haptic2, OUTPUT);
 
-    espNowReceiver.setup();
-    lcd.setup();
+    // Configure LEDC for PWM generation (Channel 0, frequency 38kHz, 8-bit resolution)
+    ledcSetup(ledChannel, frequency, resolution);
 
-    ledcSetup(0, frequency, 8); // Channel 0, frequency, resolution (8 bits)
-    ledcAttachPin(pwmPin, 0);   // Attach the PWM pin to the LEDC channel
-
-    lcd.tft.setTextSize(1);
-    lcd.tft.setTextColor(ST77XX_WHITE);
-    lcd.tft.setCursor(0, 0);
-    //     // pinMode(pwmPin, OUTPUT);
-    //     // pinMode(ledPin, OUTPUT);
-    //     // digitalWrite(ledPin, LOW);
-    //     // pinMode(buttonPin, INPUT_PULLUP);
-    //     // pinMode(reload_pin, INPUT_PULLUP);
+    // Attach PWM pin to the LEDC channel
+    ledcAttachPin(pwmPin, ledChannel);
 }
 
 void Emitter::loop()
 {
-    espNowReceiver.loop();
-    if (digitalRead(button) == LOW)
+    if (digitalRead(trigger) == LOW)
     {
         digitalWrite(led, HIGH);
-        digitalWrite(haptic, HIGH);
+        digitalWrite(haptic1, HIGH);
+        digitalWrite(haptic2, HIGH);
+
         Serial.println("button pressed!");
 
-        // Send shot signal
-        tone(pwmPin, frequency); // Generate a 38kHz tone
-        delay(100);              // Keep tone for 100ms
-        noTone(pwmPin);          // Stop the tone
-        delay(500);              // Debounce delay
+        // Start PWM signal on the PWM pin at 38kHz
+        ledcWriteTone(ledChannel, frequency);
+        delay(100); // Send signal for 100ms
 
-        // Immediately check the receiver value
-        sensor_Value = espNowReceiver.getButtonValue();
-
-        // Display shot status
-        lcd.tft.fillScreen(ST77XX_BLACK); // Clear the screen before printing
-        lcd.tft.setCursor(0, 0);
-        lcd.tft.setTextSize(1);
-        lcd.tft.setTextColor(ST77XX_WHITE);
-        lcd.tft.println("EMITTER SHOT!!!");
-
-        if (sensor_Value == 0) // Check if shot hit
-        {
-            lcd.tft.println("SHOT HIT!!");
-        }
-        else
-        {
-            lcd.tft.println("SHOT MISSED!");
-        }
+        // Stop the PWM signal
+        ledcWrite(ledChannel, 0); // Set duty cycle to 0 to stop the signal
+        delay(100);               // Debounce delay
     }
     else
     {
-        Serial.println("button released!");
         digitalWrite(led, LOW);
-        digitalWrite(haptic, LOW);
+        digitalWrite(haptic1, LOW);
+        digitalWrite(haptic2, LOW);
     }
-
-    //     //espNowReceiver.loop();
-    //     // if (digitalRead(buttonPin) == LOW) // Button pressed
-    //     // {
-
-    //     //     // Send shot signal
-    //     //     tone(pwmPin, frequency); // Generate a 38kHz tone
-    //     //     delay(100);              // Keep tone for 100ms
-    //     //     noTone(pwmPin);          // Stop the tone
-    //     //     delay(500);              // Debounce delay
-
-    //     //     // Immediately check the receiver value
-    //     //     //sensor_Value = espNowReceiver.getButtonValue();
-
-    //     //     // Display shot status
-    //     //     lcd.tft.fillScreen(ST77XX_BLACK); // Clear the screen before printing
-    //     //     lcd.tft.setCursor(0, 0);
-    //     //     lcd.tft.setTextSize(1);
-    //     //     lcd.tft.setTextColor(ST77XX_WHITE);
-    //     //     lcd.tft.println("EMITTER SHOT!!!");
-
-    //     //     if (digitalRead(buttonPin) == 0) // Check if shot hit
-    //     //     {
-    //     //         lcd.tft.println("SHOT HIT!!");
-    //     //     }
-    //     //     else
-    //     //     {
-    //     //         lcd.tft.println("SHOT MISSED!");
-    //     //     }
-
-    //     //     // Serial print for debugging
-    //     //     // Serial.print("Receiver Value: ");
-    //     //     // Serial.println(sensor_Value);
-    //     // }
-
-    //     // // Serial.print("Receiver Value: ");
-    //     // // Serial.println(sensor_Value);
-    // }
 }

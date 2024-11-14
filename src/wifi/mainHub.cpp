@@ -1,14 +1,99 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
-#include "Scoreboard.h"
+#include <esp_now.h>
+#include "mainHub.h"
 #include "SPIFFS.h"
 
-Scoreboard::Scoreboard() {};
+MainHub::MainHub() {};
+
+// List of vests' MAC Addresses
+uint8_t vestMacAddresses[][6] = {
+    {0xD0, 0xEF, 0x76, 0x15, 0x4E, 0x20}, // First vest MAC address
+    {0xFC, 0xB4, 0x67, 0x74, 0x4B, 0xE0}  // Second vest MAC address (example)
+};
+
+typedef struct input_data
+{
+    bool hasGameStarted;
+    char color[10]; // For the sake of simplicity, use a char array for color
+} input_data;
+
+input_data gameData;
+
+// Structure example to receive data
+// Must match the sender structure
+typedef struct struct_message
+{
+    int id; // 1: team1; 2:team2
+            //   int kills;
+            //   int Health;
+            //   int deaths;
+    int reciever1Value;
+    int reciever2Value;
+    int reciever3Value;
+    int reciever4Value;
+} struct_message;
+
+extern struct_message myData;
+
+esp_now_peer_info_t peerInfoHub[2]; // Array to hold peer information for multiple vests
+
+// Create a structure to hold the readings from each board
+struct_message board1;
+struct_message board2;
+
+// Create an array with all the structures
+struct_message boardsStruct[2] = {board1, board2};
+
+// callback function that will be executed when data is received
+void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
+{
+    char macStr[18];
+    //Serial.print("Packet received from: ");
+    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+             mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+    //Serial.println(macStr);
+
+    memcpy(&myData, incomingData, sizeof(myData));
+    //Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
+
+    // Update the structures with the new incoming data
+    if (myData.id == 1)
+    {
+        // Update Player 1's board
+        board1.reciever1Value = myData.reciever1Value;
+        board1.reciever2Value = myData.reciever2Value;
+        board1.reciever3Value = myData.reciever3Value;
+        board1.reciever4Value = myData.reciever4Value;
+    }
+    else if (myData.id == 2)
+    {
+        // Update Player 2's board
+        board2.reciever1Value = myData.reciever1Value;
+        board2.reciever2Value = myData.reciever2Value;
+        board2.reciever3Value = myData.reciever3Value;
+        board2.reciever4Value = myData.reciever4Value;
+    }
+
+    // Debugging: Print received values
+    // Serial.printf("Reciever 1: %d \n", (myData.id == 1) ? board1.reciever1Value : board2.reciever1Value);
+    // Serial.printf("Reciever 2: %d \n", (myData.id == 1) ? board1.reciever2Value : board2.reciever2Value);
+    // Serial.printf("Reciever 3: %d \n", (myData.id == 1) ? board1.reciever3Value : board2.reciever3Value);
+    // Serial.printf("Reciever 4: %d \n", (myData.id == 1) ? board1.reciever4Value : board2.reciever4Value);
+    // Serial.println();
+}
+
+// Callback function when data is sent
+void OnDataSentHub(const uint8_t *mac_addr, esp_now_send_status_t status)
+{
+    //Serial.print("\r\nLast Packet Send Status:\t");
+    //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+}
 
 // Replace with your network credentials
-const char* Ssid     = "NEONKNIGHTS";
-const char* Password = "neonknights";
+const char *Ssid = "NEONKNIGHTS";
+const char *Password = "neonknights";
 
 // Create an AsyncWebServer object on port 80
 AsyncWebServer Server(80);
@@ -16,17 +101,17 @@ AsyncWebSocket ws("/ws");
 
 String Gamemode = "";
 
+int Player1Health;
+int Player2Health;
+int Player1Damage;  
+int Player2Damage;
 String Team1Name = "test";
 String Team1Color = "";
 String Player1Name = "";
-String Player1Health = "";
-String Player1Damage = "";
 
 String Team2Name = "";
 String Team2Color = "";
 String Player2Name = "";
-String Player2Health = "";
-String Player2Damage = "";
 
 int Player1Score = 0;
 int Player1Kills = 0;
@@ -37,7 +122,8 @@ int Player2Kills = 0;
 int Player2Deaths = 0;
 
 // Function to return HTML content
-String getHTML() {
+String getHTML()
+{
     String html = R"rawliteral(
         <!DOCTYPE html>
         <html>
@@ -317,7 +403,8 @@ String getHTML() {
                 
                     <div class="team1">
                         <div class="stat" id="t1n">
-                            )rawliteral" + Team1Name + R"rawliteral(
+                            )rawliteral" +
+                  Team1Name + R"rawliteral(
                         </div>
 
                         <div class="statbox">
@@ -337,23 +424,28 @@ String getHTML() {
 
                         <div class="statbox">
                             <div class="stat" id="p1n">
-                                )rawliteral" + Player1Name + R"rawliteral(
+                                )rawliteral" +
+                  Player1Name + R"rawliteral(
                             </div>
                             <div class="stat" id="player1score">
-                                )rawliteral" + Player1Score + R"rawliteral(
+                                )rawliteral" +
+                  Player1Score + R"rawliteral(
                             </div>
                             <div class="stat" id="player1kills">
-                                )rawliteral" + Player1Kills + R"rawliteral(
+                                )rawliteral" +
+                  Player1Kills + R"rawliteral(
                             </div>
                             <div class="stat" id="player1deaths">
-                                )rawliteral" + Player1Deaths + R"rawliteral(
+                                )rawliteral" +
+                  Player1Deaths + R"rawliteral(
                             </div>
                         </div>
                     </div>
 
                     <div class="team2">
                         <div class="stat" id="t2n">
-                            )rawliteral" + Team2Name + R"rawliteral(
+                            )rawliteral" +
+                  Team2Name + R"rawliteral(
                         </div>
 
                         <div class="statbox">
@@ -373,16 +465,20 @@ String getHTML() {
 
                         <div class="statbox">
                             <div class="stat"  id="p2n">
-                                )rawliteral" + Player2Name + R"rawliteral(
+                                )rawliteral" +
+                  Player2Name + R"rawliteral(
                             </div>
                             <div class="stat" id="player2score">
-                                )rawliteral" + Player2Score + R"rawliteral(
+                                )rawliteral" +
+                  Player2Score + R"rawliteral(
                             </div>
                             <div class="stat" id="player2kills">
-                                )rawliteral" + Player2Kills + R"rawliteral(
+                                )rawliteral" +
+                  Player2Kills + R"rawliteral(
                             </div>
                             <div class="stat" id="player2deaths">
-                                )rawliteral" + Player2Deaths + R"rawliteral(
+                                )rawliteral" +
+                  Player2Deaths + R"rawliteral(
                             </div>
                         </div>
                     </div>
@@ -395,7 +491,8 @@ String getHTML() {
     return html;
 }
 
-void UpdateWebpage() {
+void UpdateWebpage()
+{
     String json = "{";
     json += "\"t1n\":\"" + Team1Name + "\",";
     json += "\"p1n\":\"" + Player1Name + "\",";
@@ -408,34 +505,116 @@ void UpdateWebpage() {
     json += "\"player2kills\":" + String(Player2Kills) + ",";
     json += "\"player2deaths\":" + String(Player2Deaths);
     json += "}";
-    
+
     ws.textAll(json);
 }
 
-void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, 
-               AwsEventType type, void *arg, uint8_t *data, size_t len) {
-    if (type == WS_EVT_CONNECT) {
+void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
+               AwsEventType type, void *arg, uint8_t *data, size_t len)
+{
+    if (type == WS_EVT_CONNECT)
+    {
         Serial.println("WebSocket client connected");
-    } else if (type == WS_EVT_DISCONNECT) {
+    }
+    else if (type == WS_EVT_DISCONNECT)
+    {
         Serial.println("WebSocket client disconnected");
     }
 }
 
+void EspNowSetup()
+{
+    // Init ESP-NOW
+    if (esp_now_init() != ESP_OK)
+    {
+        Serial.println("Error initializing ESP-NOW");
+        return;
+    }
 
-void Scoreboard::setup() {
-    // Start the Serial communication
+    // Register the callback for receiving data
+    esp_now_register_recv_cb(OnDataRecvHub);
+
+    // Add peers (vests) to the list
+    for (int i = 0; i < 2; i++)
+    {
+        memcpy(peerInfoHub[i].peer_addr, vestMacAddresses[i], 6);
+        peerInfoHub[i].channel = 0;
+        peerInfoHub[i].encrypt = false;
+
+        if (esp_now_add_peer(&peerInfoHub[i]) != ESP_OK)
+        {
+            Serial.print("Failed to add peer: ");
+            for (int j = 0; j < 6; j++)
+            {
+                Serial.print(vestMacAddresses[i][j], HEX);
+                if (j < 5)
+                    Serial.print(":");
+            }
+            Serial.println();
+        }
+    }
+
+    // Register the callback for sending data
+    esp_now_register_send_cb(OnDataSentHub);
+}
+
+void EspNowLoop()
+{
+    // Send board data to each vest
+    for (int i = 0; i < 2; i++)
+    {
+        esp_err_t result = esp_now_send(vestMacAddresses[i], (uint8_t *)&myData, sizeof(myData));
+
+        if (result == ESP_OK)
+        {
+            //Serial.printf("Board data sent successfully to vest %d\n", i + 1);
+        }
+        else
+        {
+            //Serial.printf("Error sending board data to vest %d\n", i + 1);
+        }
+    }
+
+    delay(200); // Delay for a while before sending data again
+}
+
+void sendGameData()
+{
+    // Fill game data with example values
+    // gameData.hasGameStarted = true;
+    // strcpy(gameData.color, "green");
+
+    // Send the game data to each vest
+    for (int i = 0; i < 2; i++)
+    {
+        esp_err_t result = esp_now_send(vestMacAddresses[i], (uint8_t *)&gameData, sizeof(gameData));
+
+        if (result == ESP_OK)
+        {
+            //Serial.printf("Game data sent successfully to vest %d\n", i + 1);
+        }
+        else
+        {
+            //.printf("Error sending game data to vest %d\n", i + 1);
+        }
+    }
+}
+
+void MainHub::setup()
+{
     Serial.begin(115200);
+
+    // Set up WiFi in Station Mode
+    WiFi.mode(WIFI_AP_STA); // Station mode for ESP-NOW compatibility
 
     // Set up the access point
     WiFi.softAP(Ssid, Password);
     Serial.println("Access Point started");
     Serial.print("IP address: ");
     Serial.println(WiFi.softAPIP());
-
     // Serve HTML page on root URL
-    Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/html", getHTML());
-    });
+    Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(200, "text/html", getHTML()); });
 
     if (!SPIFFS.begin(true))
     {
@@ -450,42 +629,131 @@ void Scoreboard::setup() {
     Server.addHandler(&ws);
 
     // Handle form submission
-    Server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request) {
-        if (request->hasParam("gamemode", true)) Gamemode = request->getParam("gamemode", true)->value();
-        if (request->hasParam("team1name", true)) Team1Name = request->getParam("team1name", true)->value();
-        if (request->hasParam("team1color", true)) Team1Color = request->getParam("team1color", true)->value();
-        if (request->hasParam("player1name", true)) Player1Name = request->getParam("player1name", true)->value();
-        if (request->hasParam("player1health", true)) Player1Health = request->getParam("player1health", true)->value();
-        if (request->hasParam("player1damage", true)) Player1Damage = request->getParam("player1damage", true)->value();
-        if (request->hasParam("team2name", true)) Team2Name = request->getParam("team2name", true)->value();
-        if (request->hasParam("team2color", true)) Team2Color = request->getParam("team2color", true)->value();
-        if (request->hasParam("player2name", true)) Player2Name = request->getParam("player2name", true)->value();
-        if (request->hasParam("player2health", true)) Player2Health = request->getParam("player2health", true)->value();
-        if (request->hasParam("player2damage", true)) Player2Damage = request->getParam("player2damage", true)->value();
+    Server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request)
+              {
+        if (request->hasParam("gamemode", true)) 
+            Gamemode = request->getParam("gamemode", true)->value();
+        if (request->hasParam("team1name", true)) 
+            Team1Name = request->getParam("team1name", true)->value();
+        if (request->hasParam("team1color", true)) 
+            Team1Color = request->getParam("team1color", true)->value();
+        if (request->hasParam("player1name", true)) 
+            Player1Name = request->getParam("player1name", true)->value();
+        if (request->hasParam("player1health", true)) 
+            Player1Health = request->getParam("player1health", true)->value().toInt();  // Convert to int
+        if (request->hasParam("player1damage", true)) 
+            Player1Damage = request->getParam("player1damage", true)->value().toInt();  // Convert to int
+        if (request->hasParam("team2name", true)) 
+            Team2Name = request->getParam("team2name", true)->value();
+        if (request->hasParam("team2color", true)) 
+            Team2Color = request->getParam("team2color", true)->value();
+        if (request->hasParam("player2name", true)) 
+            Player2Name = request->getParam("player2name", true)->value();
+        if (request->hasParam("player2health", true)) 
+            Player2Health = request->getParam("player2health", true)->value().toInt();  // Convert to int
+        if (request->hasParam("player2damage", true)) 
+            Player2Damage = request->getParam("player2damage", true)->value().toInt();  // Convert to int
 
         Serial.println("Game setup confirmed:");
-        request->send(200, "text/plain", "Data received");
-    });
+        Serial.println("Gamemode: " + Gamemode);
+        request->send(200, "text/plain", "Data received"); });
 
     // Start server
     Server.begin();
+
+    gameData.hasGameStarted = true;
+    EspNowSetup();
 }
 
-void Scoreboard::loop()
+void sendColorToVest(int player, const char *color)
 {
-    Player1Score += 10;
-    Player1Kills += 2;
-    Player1Deaths += 1;
+    // Update the color in gameData
+    strncpy(gameData.color, color, sizeof(gameData.color) - 1); // Set the color (e.g., "white")
+    gameData.color[sizeof(gameData.color) - 1] = '\0';          // Ensure null-termination
 
-    Player2Score += 5;
-    Player2Kills += 1;
-    Player2Deaths += 2;
+    // Send the updated color data to the correct vest based on the player
+    if (player == 1)
+    {
+        // Send to Player 1's vest (index 0)
+        esp_err_t result = esp_now_send(vestMacAddresses[0], (uint8_t *)&gameData, sizeof(gameData));
+        if (result == ESP_OK)
+        {
+            //Serial.printf("Color data sent to vest 1: %s\n", gameData.color);
+        }
+        else
+        {
+            //Serial.printf("Error sending color data to vest 1\n");
+        }
+    }
+    else if (player == 2)
+    {
+        // Send to Player 2's vest (index 1)
+        esp_err_t result = esp_now_send(vestMacAddresses[1], (uint8_t *)&gameData, sizeof(gameData));
+        if (result == ESP_OK)
+        {
+            //Serial.printf("Color data sent to vest 2: %s\n", gameData.color);
+        }
+        else
+        {
+            //Serial.printf("Error sending color data to vest 2\n");
+        }
+    }
+}
+int i=0;
 
-    UpdateWebpage();
+void MainHub::loop()
+{
+    EspNowLoop();   // Handles sending and receiving via ESP-NOW
+    sendGameData(); // Send game data to vests
 
-    // Nothing to do here
-    Serial.println("Gamemode: " + Gamemode);
-    Serial.println("Team 1 - Name: " + Team1Name + ", Color: " + Team1Color + ", Player Name: " + Player1Name + ", Health: " + Player1Health + ", Damage: " + Player1Damage);
-    Serial.println("Team 2 - Name: " + Team2Name + ", Color: " + Team2Color + ", Player Name: " + Player2Name + ", Health: " + Player2Health + ", Damage: " + Player2Damage);
-    delay(5000);
+    if (Gamemode == "freeforall")
+    {
+        // Handle Player 1's board data (vest 1)
+        if (board1.reciever1Value == 0 || board1.reciever2Value == 0 || board1.reciever3Value == 0 || board1.reciever4Value == 0)
+        {
+            // Player 1 is hit (any receiver value is 0)
+            Player1Health -= Player1Damage;
+        }
+
+        // Handle Player 2's board data (vest 2)
+        if (board2.reciever1Value == 0 || board2.reciever2Value == 0 || board2.reciever3Value == 0 || board2.reciever4Value == 0)
+        {
+            // Player 2 is hit (any receiver value is 0)
+            Player2Health -= Player2Damage;
+        }
+
+        // Check if Player 1 has died
+        if (Player1Health <= 0)
+        {
+            Player1Health = 0;           // Make sure health doesn't go negative
+            Player2Kills++;              // Player 2 gets a kill
+            Player1Deaths++;             // Player 1 has died
+            sendColorToVest(1, "white"); // Player 1 is dead, update Player 1's vest color to white
+            delay(5000);                 // Wait for 5 seconds before continuing
+        }
+
+        // Check if Player 2 has died
+        if (Player2Health <= 0)
+        {
+            Player2Health = 0;           // Make sure health doesn't go negative
+            Player1Kills++;              // Player 1 gets a kill
+            Player2Deaths++;             // Player 2 has died
+            sendColorToVest(2, "white"); // Player 2 is dead, update Player 2's vest color to white
+            delay(5000);                 // Wait for 5 seconds before continuing
+        }
+
+        Player1Kills = i++;
+        // Update the webpage with the latest stats
+        UpdateWebpage();
+
+        
+        // Debugging output
+        Serial.println("Gamemode: " + Gamemode);
+        Serial.println("Player 1 Health: " + String(Player1Health));
+        Serial.println("Player 2 Health: " + String(Player2Health));
+        Serial.println("Player 1 Kills: " + String(Player1Kills));
+        Serial.println("Player 2 Kills: " + String(Player2Kills));
+    }
+
+    delay(100); // Optional delay to prevent excessive looping
 }
