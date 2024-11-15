@@ -16,7 +16,8 @@ uint8_t vestMacAddresses[2][6] = {
 typedef struct input_data
 {
     bool hasGameStarted;
-    char color[10]; // For the sake of simplicity, use a char array for color
+    int team1Color;
+    int team2Color;
 } input_data;
 
 input_data gameData;
@@ -575,40 +576,6 @@ void EspNowLoop()
     delay(100);
 }
 
-void sendColorToVest(int player, const char *color)
-{
-    // Update the color in gameData
-    strncpy(gameData.color, color, sizeof(gameData.color) - 1); // Set the color (e.g., "white")
-    gameData.color[sizeof(gameData.color) - 1] = '\0';          // Ensure null-termination
-
-    // Send the updated color data to the correct vest based on the player
-    if (player == 1)
-    {
-        // Send to Player 1's vest (index 0)
-        esp_err_t result = esp_now_send(vestMacAddresses[0], (uint8_t *)&gameData, sizeof(gameData));
-        if (result == ESP_OK)
-        {
-            // Serial.printf("Color data sent to vest 1: %s\n", gameData.color);
-        }
-        else
-        {
-            // Serial.printf("Error sending color data to vest 1\n");
-        }
-    }
-    else if (player == 2)
-    {
-        // Send to Player 2's vest (index 1)
-        esp_err_t result = esp_now_send(vestMacAddresses[1], (uint8_t *)&gameData, sizeof(gameData));
-        if (result == ESP_OK)
-        {
-            // Serial.printf("Color data sent to vest 2: %s\n", gameData.color);
-        }
-        else
-        {
-            // Serial.printf("Error sending color data to vest 2\n");
-        }
-    }
-}
 
 void sendGameData()
 {   
@@ -690,15 +657,39 @@ void MainHub::setup()
         if (request->hasParam("player2damage", true)) 
             Player2Damage = request->getParam("player2damage", true)->value().toInt();  // Convert to int
 
-        sendColorToVest(1, Team1Color.c_str());
-        sendColorToVest(2, Team2Color.c_str());
+        
         Serial.println("Game setup confirmed:");
-        Serial.println("Gamemode: " + Gamemode);
+        if(Team1Color == "blue")
+        {
+            gameData.team1Color = 1;
+        }
+        if(Team1Color == "green")
+        {
+            gameData.team1Color = 2;
+        }
+        if(Team1Color == "yellow")
+        {
+            gameData.team1Color = 3;
+        }
+        if (Team1Color == "purple")
+        {
+            gameData.team1Color = 4;
+        }
+        if (Team1Color == "cyan")
+        {
+            gameData.team1Color = 5;
+        }
+        
+        Serial.print("Gamemode: " + Gamemode);
+        Serial.print("player 1 color: " + Team1Color);
+        Serial.print("player 2 color: " + Team2Color);
+        Serial.println();
+
         request->send(200, "text/plain", "Data received"); });
 
     Server.on("/endgame", HTTP_POST, [](AsyncWebServerRequest *request)
               {
-                  gameData.hasGameStarted = false; // Set the game end flag
+                  //gameData.hasGameStarted = false; // Set the game end flag
                   Serial.println("Game has ended");
                   request->send(200, "text/plain", "Game ended"); // Send confirmation response
               });
@@ -799,10 +790,7 @@ void MainHub::loop()
         Serial.println();
         // Debugging output
 
-        Serial.print("Gamemode: " + Gamemode);
-        Serial.print("player 1 color: " + Team1Color);
-        Serial.print("player 2 color: " + Team2Color);
-        Serial.println();
+        
 
         Serial.println("Player 1 Health: " + String(Player1Health));
         Serial.println("Player 2 Health: " + String(Player2Health));

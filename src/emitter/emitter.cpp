@@ -83,7 +83,7 @@ void deletebullets (int bullets)
 
     LcdTFT.tft.fillRect(5,10,13,y2,ST7735_BLACK);
 
-    LcdTFT.tft.fillRect(76,50,20,10,ST7735_BLACk);
+    LcdTFT.tft.fillRect(76,50,20,10,ST7735_BLACK);
     LcdTFT.tft.setCursor(30,50);
     LcdTFT.tft.printf("Bullets:%d",bullets);
 }
