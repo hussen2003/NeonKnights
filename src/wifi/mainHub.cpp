@@ -690,6 +690,8 @@ void MainHub::setup()
         if (request->hasParam("player2damage", true)) 
             Player2Damage = request->getParam("player2damage", true)->value().toInt();  // Convert to int
 
+        sendColorToVest(1, Team1Color.c_str());
+        sendColorToVest(2, Team2Color.c_str());
         Serial.println("Game setup confirmed:");
         Serial.println("Gamemode: " + Gamemode);
         request->send(200, "text/plain", "Data received"); });
@@ -704,8 +706,7 @@ void MainHub::setup()
     // Start server
     Server.begin();    
     EspNowSetup();
-    sendColorToVest(1, Team1Color.c_str());
-    sendColorToVest(2, Team2Color.c_str());
+    
 }
 
 // int hitCounter = 0;           // Tracks successful hits

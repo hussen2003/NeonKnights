@@ -27,7 +27,7 @@ Emitter emitter;
 Reciever reciever;
 
 void setup() {
-  mainHub.setup();
+  //mainHub.setup();
   //getMacAddress.setup();
   //wifiScan.setup();
   //wifiSAP.setup();
@@ -37,18 +37,18 @@ void setup() {
   //lcdTFT.setup();
   // Menu.setup();
   //emitter.setup();
-  //reciever.setup();
+  reciever.setup();
 }
 
 void loop() {
-  mainHub.loop();
+  //mainHub.loop();
   //wifiScan.loop();
   //wifiSAP.loop();
   //espNowSender.loop();
   //espNowReceiver.loop();
   //Menu.loop();
   //emitter.loop();
-  //reciever.loop();
+  reciever.loop();
 }
 
 

@@ -269,11 +269,6 @@ void Reciever::loop()
             // setColor(LOW, LOW, LOW);
         }
     }
-    else
-    {
-        // If the game hasn't started or color is empty, turn off LEDs
-        setColor(LOW, LOW, LOW);
-    }
     delay(100);
     // Debugging: Print the color received
     Serial.printf("Color: %s\n", receivedData.color);
