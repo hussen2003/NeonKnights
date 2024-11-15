@@ -6,13 +6,13 @@
 Reciever::Reciever() {}
 
 // RECEIVER'S MAC Address
-//uint8_t broadcastAddress[] = {0xFC, 0xB4, 0x67, 0x74, 0x4B, 0xE0};
+// uint8_t broadcastAddress[] = {0xFC, 0xB4, 0x67, 0x74, 0x4B, 0xE0};
 uint8_t broadcastAddress[] = {0xfc, 0xB4, 0x67, 0x72, 0x7c, 0x94};
 
 // Structure to send data (same as before)
 typedef struct struct_message
 {
-    int id; // must be unique for each sender board
+    int id = 2; // must be unique for each sender board
     int reciever1Value;
     int reciever2Value;
     int reciever3Value;
@@ -88,8 +88,6 @@ void espNowSetup()
 
 void espNowLoop()
 {
-    // Set values to send
-    myData.id = 1;
     Serial.printf("Data ID sent: %d\n", myData.id);
 
     // Send message via ESP-NOW
@@ -171,6 +169,26 @@ void setupRecieversAndLed()
     digitalWrite(led4_B, LOW);
 }
 
+void setColor(int red, int green, int blue)
+{
+    // Set all LEDs to the specified color
+    digitalWrite(led1_R, red);
+    digitalWrite(led1_G, green);
+    digitalWrite(led1_B, blue);
+
+    digitalWrite(led2_R, red);
+    digitalWrite(led2_G, green);
+    digitalWrite(led2_B, blue);
+
+    digitalWrite(led3_R, red);
+    digitalWrite(led3_G, green);
+    digitalWrite(led3_B, blue);
+
+    digitalWrite(led4_R, red);
+    digitalWrite(led4_G, green);
+    digitalWrite(led4_B, blue);
+}
+
 void Reciever::setup()
 {
     Serial.begin(115200);
@@ -181,6 +199,7 @@ void Reciever::setup()
 void Reciever::loop()
 {
     espNowLoop();
+
     int reciever1Value = digitalRead(reciever1);
     int reciever2Value = digitalRead(reciever2);
     int reciever3Value = digitalRead(reciever3);
@@ -191,94 +210,71 @@ void Reciever::loop()
     myData.reciever3Value = reciever3Value;
     myData.reciever4Value = reciever4Value;
 
-    // Serial.printf("Reciever1 sent: %d", myData.reciever1Value);
-    // Serial.printf("Reciever2 sent: %d", myData.reciever2Value);
-    // Serial.printf("Reciever3 sent: %d", myData.reciever3Value);
-    // Serial.printf("Reciever4 sent: %d", myData.reciever4Value);
-
-    // Serial.print("Zone 1: ");
-    // Serial.print(reciever1Value);
-    // Serial.print("   Zone 2: ");
-    // Serial.print(reciever2Value);
-    // Serial.print("   Zone 3: ");
-    // Serial.print(reciever3Value);
-    // Serial.print("   Zone 4: ");
-    // Serial.println(reciever4Value);
-
-    // Receiver 1
     if (reciever1Value == 0)
     {
         digitalWrite(led1_R, HIGH);
+        digitalWrite(led1_B, LOW);
+        digitalWrite(led1_G, LOW);
+        delay(100);
     }
-
-    // Receiver 2
     if (reciever2Value == 0)
     {
         digitalWrite(led2_R, HIGH);
+        digitalWrite(led2_B, LOW);
+        digitalWrite(led2_G, LOW);
+        delay(100);
     }
-
-    // Receiver 3
     if (reciever3Value == 0)
     {
         digitalWrite(led3_R, HIGH);
+        digitalWrite(led3_B, LOW);
+        digitalWrite(led3_G, LOW);
+        delay(100);
     }
-
-    // Receiver 4
     if (reciever4Value == 0)
     {
         digitalWrite(led4_R, HIGH);
+        digitalWrite(led4_B, LOW);
+        digitalWrite(led4_G, LOW);
+        delay(100);
     }
 
-    if (strcmp(receivedData.color,"blue"))
+    // Handle color display logic only if the game has started
+    if (receivedData.hasGameStarted && strlen(receivedData.color) > 0)
     {
-        digitalWrite(led1_B, HIGH);
-        digitalWrite(led2_B, HIGH);
-        digitalWrite(led3_B, HIGH);
-        digitalWrite(led4_B, HIGH);
+        // Check the color received and set the LED outputs accordingly
+        if (strcmp(receivedData.color, "blue") == 0)
+        {
+            setColor(LOW, LOW, HIGH); // Set LEDs to blue
+        }
+        else if (strcmp(receivedData.color, "green") == 0)
+        {
+            setColor(LOW, HIGH, LOW); // Set LEDs to green
+        }
+        else if (strcmp(receivedData.color, "yellow") == 0)
+        {
+            setColor(HIGH, HIGH, LOW); // Set LEDs to yellow
+        }
+        else if (strcmp(receivedData.color, "purple") == 0)
+        {
+            setColor(HIGH, LOW, HIGH); // Set LEDs to purple
+        }
+        else if (strcmp(receivedData.color, "cyan") == 0)
+        {
+            setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
+        }
+        else
+        {
+            // If the color is not recognized, turn off the LEDs
+            // setColor(LOW, LOW, LOW);
+        }
     }
-    if (strcmp(receivedData.color, "green"))
+    else
     {
-        digitalWrite(led1_B, HIGH);
-        digitalWrite(led2_B, HIGH);
-        digitalWrite(led3_B, HIGH);
-        digitalWrite(led4_B, HIGH);
+        // If the game hasn't started or color is empty, turn off LEDs
+        setColor(LOW, LOW, LOW);
     }
-    if (strcmp(receivedData.color,"yellow"))
-    {
-        digitalWrite(led1_R, HIGH);
-        digitalWrite(led2_R, HIGH);
-        digitalWrite(led3_R, HIGH);
-        digitalWrite(led4_R, HIGH);
-
-        digitalWrite(led1_G, HIGH);
-        digitalWrite(led2_G, HIGH);
-        digitalWrite(led3_G, HIGH);
-        digitalWrite(led4_G, HIGH);
-    }
-    if (strcmp(receivedData.color,"purple"))
-    {
-        digitalWrite(led1_R, HIGH);
-        digitalWrite(led2_R, HIGH);
-        digitalWrite(led3_R, HIGH);
-        digitalWrite(led4_R, HIGH);
-
-        digitalWrite(led1_B, HIGH);
-        digitalWrite(led2_B, HIGH);
-        digitalWrite(led3_B, HIGH);
-        digitalWrite(led4_B, HIGH);
-    }
-    if (strcmp(receivedData.color, "cyan"))
-    {
-        digitalWrite(led1_B, HIGH);
-        digitalWrite(led2_B, HIGH);
-        digitalWrite(led3_B, HIGH);
-        digitalWrite(led4_B, HIGH);
-
-        digitalWrite(led1_G, HIGH);
-        digitalWrite(led2_G, HIGH);
-        digitalWrite(led3_G, HIGH);
-        digitalWrite(led4_G, HIGH);
-    }
-
-    Serial.printf("Color: %s", receivedData.color);
+    delay(100);
+    // Debugging: Print the color received
+    Serial.printf("Color: %s\n", receivedData.color);
 }

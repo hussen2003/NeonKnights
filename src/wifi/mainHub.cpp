@@ -10,7 +10,7 @@ MainHub::MainHub() {};
 // List of vests' MAC Addresses
 uint8_t vestMacAddresses[2][6] = {
     {0xD0, 0xEF, 0x76, 0x14, 0xf6, 0x1C}, // First vest MAC address
-    {0xD0, 0xEF, 0x76, 0x15, 0x4E, 0x20}  // Second vest MAC address (example)
+    {0xD0, 0xEF, 0x76, 0x15, 0x37, 0x84}  // Second vest MAC address (example)
 };
 
 typedef struct input_data
@@ -67,10 +67,6 @@ void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len
         board1.reciever3Value = myData.reciever3Value;
         board1.reciever4Value = myData.reciever4Value;
 
-        board2.reciever1Value = 1;
-        board2.reciever2Value = 1;
-        board2.reciever3Value = 1;
-        board2.reciever4Value = 1;
     }
     else if (myData.id == 2)
     {
@@ -615,9 +611,7 @@ void sendColorToVest(int player, const char *color)
 }
 
 void sendGameData()
-{
-    // Send the game data to each vest
-    gameData.hasGameStarted = true;
+{   
     for (int i = 0; i < 2; i++)
     {
         esp_err_t result = esp_now_send(vestMacAddresses[i], (uint8_t *)&gameData, sizeof(gameData));
@@ -708,9 +702,10 @@ void MainHub::setup()
               });
 
     // Start server
-    Server.begin();
-    
+    Server.begin();    
     EspNowSetup();
+    sendColorToVest(1, Team1Color.c_str());
+    sendColorToVest(2, Team2Color.c_str());
 }
 
 // int hitCounter = 0;           // Tracks successful hits
@@ -747,6 +742,7 @@ void MainHub::loop()
     if (Gamemode == "freeforall")
     {
         sendGameData(); // Send game data to vests
+        gameData.hasGameStarted = true;
 
         // Handle Player 1's board data (vest 1)
         if (board1.reciever1Value == 0 || board1.reciever2Value == 0 || board1.reciever3Value == 0 || board1.reciever4Value == 0)
@@ -790,7 +786,6 @@ void MainHub::loop()
             Player2Health = Player2InitialHealth; // Restore original health for Player 2
             // sendColorToVest(2, "green");          // Change Player 2's vest color back to green
         }
-
         // Update the webpage with the latest stats
         UpdateWebpage();
 
@@ -813,6 +808,7 @@ void MainHub::loop()
         Serial.println("Player 1 Kills: " + String(Player1Kills));
         Serial.println("Player 2 Kills: " + String(Player2Kills));
     }
+
 
     // if (Gamemode == "targetpractice")
     // {
@@ -865,4 +861,6 @@ void MainHub::loop()
     //     // Optional: Update webpage with hit/miss stats and accuracy
     //     UpdateWebpage();
     // }
+
+    
 }
