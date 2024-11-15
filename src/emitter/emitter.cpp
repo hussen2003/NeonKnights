@@ -26,7 +26,7 @@ void Emitter::setup()
 {
     Serial.begin(115200);
     pinMode(trigger, INPUT_PULLUP);
-    pinMode(led, OUTPUT);
+    pinMode(reload, INPUT_PULLUP);
     pinMode(haptic1, OUTPUT);
     pinMode(haptic2, OUTPUT);
 
@@ -55,11 +55,11 @@ void resetbullets ()
         y += 10;
     }
 
-    LcdTFT.tft.setCursor(50,64);
-    LcdTFT.tft.printf("Bullets: %d",12);
+    LcdTFT.tft.setCursor(30,50);
+    LcdTFT.tft.printf("Bullets:%d",12);
 }
 
-void resethearts ()
+void resethearts (int originalhealth)
 {
     int x = 120;
     int y = 10;
@@ -71,6 +71,9 @@ void resethearts ()
         LcdTFT.tft.fillTriangle(x-4,y,x+4,y,x,y+5,ST7735_RED);
         y += 12;
     }
+
+    LcdTFT.tft.setCursor(30,80);
+    LcdTFT.tft.printf("Health:%d",originalhealth);
 }
 
 void deletebullets (int bullets)
@@ -80,8 +83,9 @@ void deletebullets (int bullets)
 
     LcdTFT.tft.fillRect(5,10,13,y2,ST7735_BLACK);
 
-    LcdTFT.tft.setCursor(50,64);
-    LcdTFT.tft.printf("Bullets: %d",12);
+    LcdTFT.tft.fillRect(76,50,20,10,ST7735_BLACk);
+    LcdTFT.tft.setCursor(30,50);
+    LcdTFT.tft.printf("Bullets:%d",bullets);
 }
 
 void deletehearts (int originalhealth, int health)
@@ -89,6 +93,10 @@ void deletehearts (int originalhealth, int health)
     int y2 = (float)120*(1-((float)health/(float)originalhealth));
 
     LcdTFT.tft.fillRect(116,8,124,y2-3,ST7735_BLACK);
+
+    LcdTFT.tft.fillRect(70,80,30,10,ST7735_BLACK);
+    LcdTFT.tft.setCursor(30,80);
+    LcdTFT.tft.printf("Health:%d",originalhealth);
 }
 
 void ledcolor(char color[10])
@@ -139,8 +147,6 @@ char red[10] = "red";
 
 void Emitter::loop()
 {
-    // take in info from the main hub
-    // update health
 
    deletehearts(originalhealth,health);
    if (health <= 0)
