@@ -15,6 +15,10 @@ typedef struct input_data
     bool hasGameStarted;
     char color1[10];
     char color2[10]; // Color for Team 2
+    int health1;
+    int originalHealth1;
+    int health2;
+    int originalHealth2;
 } input_data;
 
 input_data RecievedData;
@@ -32,6 +36,14 @@ void OnGunDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len
     Serial.println(RecievedData.color1);
     Serial.print("Color 2: ");
     Serial.println(RecievedData.color2);
+    Serial.print("Health1: ");
+    Serial.println(RecievedData.health1);
+    Serial.print("OriginalHealth1: ");
+    Serial.println(RecievedData.originalHealth1);
+    Serial.print("Health2: ");
+    Serial.println(RecievedData.health2);
+    Serial.print("OriginalHealth2: ");
+    Serial.println(RecievedData.originalHealth2);
 }
 
 LCD_TFT LcdTFT;
@@ -44,6 +56,10 @@ const int led_G = 14;
 const int led_B = 13;
 const int haptic1 = 26;
 const int haptic2 = 4;
+
+int bullets = 12;
+int originalhealth = 0;
+int health = 0;
 
 const int pwmPin = 25;
 const int frequency = 38000; // 38kHz frequency
@@ -155,7 +171,7 @@ void resetbullets ()
     LcdTFT.tft.printf("Bullets:%d",12);
 }
 
-void resethearts (int originalhealth)
+void resethearts ()
 {
     int x = 120;
     int y = 10;
@@ -173,7 +189,7 @@ void resethearts (int originalhealth)
     LcdTFT.tft.printf("Health:%d",originalhealth);
 }
 
-void deletebullets (int bullets)
+void deletebullets ()
 {
     int deleted = 12 - bullets;
     int y2 = 10*deleted;
@@ -185,7 +201,7 @@ void deletebullets (int bullets)
     LcdTFT.tft.printf("Bullets:%d",bullets);
 }
 
-void deletehearts (int originalhealth, int health)
+void deletehearts ()
 {  
     int y2 = (float)120*(1-((float)health/(float)originalhealth));
 
@@ -197,9 +213,7 @@ void deletehearts (int originalhealth, int health)
 }
 
 
-int bullets = 12;
-int originalhealth = 100;
-int health = 10;
+
 
 void Emitter::setup()
 {
@@ -221,20 +235,40 @@ void Emitter::setup()
     LcdTFT.tft.printf("     Neon Knights");
     LcdTFT.tft.printf("          Laser Tag");
 
-    resethearts(originalhealth);
+    resethearts();
     resetbullets();
+
+}
+
+void updatehealthinfo()
+{
+    if (id == 1)
+    {
+        health = RecievedData.health1;
+        originalhealth = RecievedData.originalHealth1;
+    }
+    else if (id == 2)
+    {
+        health = RecievedData.health2;
+        originalhealth = RecievedData.originalHealth2;
+    }
 }
 
 void Emitter::loop()
 {
-
+    updatehealthinfo();
+    deletehearts();
     if (health <= 0)
     {
         SetColor(HIGH, LOW, LOW);
         while (health <= 0)
         {
+            updatehealthinfo();
+            deletehearts();
+            Serial.println(health);
             // take info from main hub
         }
+        resethearts();
     }
     setGunColor();
 
@@ -245,11 +279,11 @@ void Emitter::loop()
     {
        digitalWrite(haptic1, HIGH);
        digitalWrite(haptic2, HIGH);
+       Serial.println("3");
 
-       
        // take away bullets
        bullets--;
-       deletebullets(bullets);
+       deletebullets();
 
        // Start PWM signal on the PWM pin at 38kHz
        ledcWriteTone(ledChannel, frequency);
@@ -266,10 +300,14 @@ void Emitter::loop()
     // if reloading
     if (digitalRead(reload) == HIGH)
     {
+        Serial.println("4");
+
         // delay till done reloading
         while(digitalRead(reload) == HIGH)
         {
-
+            updatehealthinfo();
+            deletehearts();
+            Serial.println("5");
         }
         //update bullets to 12
         bullets = 12;

@@ -25,6 +25,10 @@ typedef struct input_data
     bool hasGameStarted;
     char color1[10];
     char color2[10]; // Color for Team 2
+    int health1;
+    int originalHealth1;
+    int health2;
+    int originalHealth2;
 } input_data;
 
 // Create instances of structs

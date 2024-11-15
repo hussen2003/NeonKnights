@@ -8,16 +8,20 @@
 MainHub::MainHub() {};
 
 // List of vests' MAC Addresses
-uint8_t vestMacAddresses[2][6] = {
-    {0xD0, 0xEF, 0x76, 0x14, 0xf6, 0x1C}, // First vest MAC address
-    {0xD0, 0xEF, 0x76, 0x15, 0x37, 0x84}  // Second vest MAC address (example)
-};
+uint8_t vestMacAddresses[3][6] = {
+    {0xD0, 0xEF, 0x76, 0x14, 0xf6, 0x1C},  // First vest MAC address
+    {0xD0, 0xEF, 0x76, 0x15, 0x37, 0x84},  // Second vest MAC address (example)
+    {0xD0, 0xEF, 0x76, 0x14, 0xfa, 0x10}}; // first gun MAC address
 
 typedef struct input_data
 {
     bool hasGameStarted;
     char color1[10]; // Color for Team 1
     char color2[10]; // Color for Team 2
+    int health1;
+    int originalHealth1;
+    int health2;
+    int originalHealth2;
 } input_data;
 
 input_data gameData;
@@ -38,7 +42,7 @@ typedef struct struct_message
 
 extern struct_message myData;
 
-esp_now_peer_info_t peerInfoHub[2]; // Array to hold peer information for multiple vests
+esp_now_peer_info_t peerInfoHub[3]; // Array to hold peer information for multiple vests
 
 // Create a structure to hold the readings from each board
 struct_message board1;
@@ -67,7 +71,6 @@ void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len
         board1.reciever2Value = myData.reciever2Value;
         board1.reciever3Value = myData.reciever3Value;
         board1.reciever4Value = myData.reciever4Value;
-
     }
     else if (myData.id == 2)
     {
@@ -99,6 +102,8 @@ int Player1Health;
 int Player2Health;
 int Player1Damage;
 int Player2Damage;
+int Player1InitialHealth; // Initial health value for Player 1
+int Player2InitialHealth; // Initial health value for Player 2
 String Team1Name = "";
 String Team1Color = "";
 String Player1Name = "";
@@ -533,7 +538,7 @@ void EspNowSetup()
     esp_now_register_recv_cb(OnDataRecvHub);
 
     // Add peers (vests) to the list
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
     {
         memcpy(peerInfoHub[i].peer_addr, vestMacAddresses[i], 6);
         peerInfoHub[i].channel = 0;
@@ -559,7 +564,7 @@ void EspNowSetup()
 void EspNowLoop()
 {
     // Send board data to each vest
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
     {
         esp_err_t result = esp_now_send(vestMacAddresses[i], (uint8_t *)&myData, sizeof(myData));
 
@@ -575,26 +580,28 @@ void EspNowLoop()
     delay(100);
 }
 
-
 void sendGameData()
 {
-    for (int i = 0; i < 2; i++) // Iterate through all MAC addresses
+    gameData.health1 = Player1Health;
+    gameData.health2 = Player2Health;
+
+    for (int i = 0; i < 3; i++) // Iterate through all MAC addresses
     {
         esp_err_t result = esp_now_send(vestMacAddresses[i], (uint8_t *)&gameData, sizeof(gameData));
         if (result == ESP_OK)
         {
-            Serial.print("Game data sent to vest ");
-            Serial.println(i + 1);
+            // Serial.print("Game data sent to vest ");
+            // Serial.println(i + 1);
         }
         else
         {
-            Serial.print("Error sending to vest ");
-            Serial.println(i + 1);
+            // Serial.print("Error sending to vest ");
+            // Serial.println(i + 1);
         }
     }
+    delay(100);
 }
-int Player1InitialHealth; // Initial health value for Player 1
-int Player2InitialHealth; // Initial health value for Player 2
+
 
 void MainHub::setup()
 {
@@ -642,6 +649,7 @@ void MainHub::setup()
     {
         Player1Health = request->getParam("player1health", true)->value().toInt();        // Convert to int
         Player1InitialHealth = request->getParam("player1health", true)->value().toInt(); // Convert to int
+        gameData.originalHealth1 = Player1InitialHealth;
     }  
     if (request->hasParam("player1damage", true)) 
         Player1Damage = request->getParam("player1damage", true)->value().toInt();  // Convert to int
@@ -658,6 +666,7 @@ void MainHub::setup()
     {
         Player2Health = request->getParam("player2health", true)->value().toInt(); // Convert to int
         Player2InitialHealth = request->getParam("player2health", true)->value().toInt(); // Convert to int
+        gameData.originalHealth2 = Player2InitialHealth;
     }
         
     if (request->hasParam("player2damage", true)) 
@@ -675,15 +684,14 @@ void MainHub::setup()
 
     Server.on("/endgame", HTTP_POST, [](AsyncWebServerRequest *request)
               {
-                  //gameData.hasGameStarted = false; // Set the game end flag
+                  // gameData.hasGameStarted = false; // Set the game end flag
                   Serial.println("Game has ended");
                   request->send(200, "text/plain", "Game ended"); // Send confirmation response
               });
 
     // Start server
-    Server.begin();    
+    Server.begin();
     EspNowSetup();
-    
 }
 
 // int hitCounter = 0;           // Tracks successful hits
@@ -715,7 +723,7 @@ void updateKD()
 
 void MainHub::loop()
 {
-    EspNowLoop(); // Handles sending and receiving via ESP-NOW
+    //EspNowLoop(); // Handles sending and receiving via ESP-NOW
 
     if (Gamemode == "freeforall")
     {
@@ -776,14 +784,11 @@ void MainHub::loop()
         Serial.println();
         // Debugging output
 
-        
-
         Serial.println("Player 1 Health: " + String(Player1Health));
         Serial.println("Player 2 Health: " + String(Player2Health));
         Serial.println("Player 1 Kills: " + String(Player1Kills));
         Serial.println("Player 2 Kills: " + String(Player2Kills));
     }
-
 
     // if (Gamemode == "targetpractice")
     // {
@@ -836,6 +841,4 @@ void MainHub::loop()
     //     // Optional: Update webpage with hit/miss stats and accuracy
     //     UpdateWebpage();
     // }
-
-    
 }
