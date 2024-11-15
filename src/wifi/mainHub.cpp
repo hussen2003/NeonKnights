@@ -397,7 +397,7 @@ String getHTML()
                 <div class="teambox">
                 
                     <div class="team1" style="background-color: )rawliteral" +
-                  Team1Color + R"rawliteral( ;">
+                  String(gameData.color1) + R"rawliteral( ;">
                         <div class="stat" id="t1n">
                             )rawliteral" +
                   Team1Name + R"rawliteral(
@@ -439,7 +439,7 @@ String getHTML()
                     </div>
 
                     <div class="team2" style="background-color: )rawliteral" +
-                  Team2Color + R"rawliteral( ;">
+                  String(gameData.color2) + R"rawliteral( ;">
                         <div class="stat" id="t2n">
                             )rawliteral" +
                   Team2Name + R"rawliteral(

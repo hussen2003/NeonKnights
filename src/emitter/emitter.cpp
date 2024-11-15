@@ -135,26 +135,7 @@ void EspNowGunReceiverSetup()
   esp_now_register_recv_cb(esp_now_recv_cb_t(OnGunDataRecv));
 }
 
-void Emitter::setup()
-{
-    Serial.begin(115200);
-    EspNowGunReceiverSetup();
-    pinMode(trigger, INPUT_PULLUP);
-    pinMode(reload, INPUT_PULLUP);
-    pinMode(haptic1, OUTPUT);
-    pinMode(haptic2, OUTPUT);
 
-    // Configure LEDC for PWM generation (Channel 0, frequency 38kHz, 8-bit resolution)
-    ledcSetup(ledChannel, frequency, resolution);
-
-    // Attach PWM pin to the LEDC channel
-    ledcAttachPin(pwmPin, ledChannel);
-
-    LcdTFT.setup();
-    LcdTFT.tft.fillScreen(ST7735_BLACK);
-    LcdTFT.tft.printf("     Neon Knights");
-    LcdTFT.tft.printf("          Laser Tag");
-}
 
 
 void resetbullets ()
@@ -169,6 +150,7 @@ void resetbullets ()
         y += 10;
     }
 
+    LcdTFT.tft.fillRect(76, 50, 20, 10, ST7735_BLACK);
     LcdTFT.tft.setCursor(30,50);
     LcdTFT.tft.printf("Bullets:%d",12);
 }
@@ -186,6 +168,7 @@ void resethearts (int originalhealth)
         y += 12;
     }
 
+    LcdTFT.tft.fillRect(70, 80, 30, 10, ST7735_BLACK);
     LcdTFT.tft.setCursor(30,80);
     LcdTFT.tft.printf("Health:%d",originalhealth);
 }
@@ -216,7 +199,31 @@ void deletehearts (int originalhealth, int health)
 
 int bullets = 12;
 int originalhealth = 100;
-int health = 0;
+int health = 10;
+
+void Emitter::setup()
+{
+    Serial.begin(115200);
+    EspNowGunReceiverSetup();
+    pinMode(trigger, INPUT_PULLUP);
+    pinMode(reload, INPUT_PULLUP);
+    pinMode(haptic1, OUTPUT);
+    pinMode(haptic2, OUTPUT);
+
+    // Configure LEDC for PWM generation (Channel 0, frequency 38kHz, 8-bit resolution)
+    ledcSetup(ledChannel, frequency, resolution);
+
+    // Attach PWM pin to the LEDC channel
+    ledcAttachPin(pwmPin, ledChannel);
+
+    LcdTFT.setup();
+    LcdTFT.tft.fillScreen(ST7735_BLACK);
+    LcdTFT.tft.printf("     Neon Knights");
+    LcdTFT.tft.printf("          Laser Tag");
+
+    resethearts(originalhealth);
+    resetbullets();
+}
 
 void Emitter::loop()
 {
@@ -232,12 +239,14 @@ void Emitter::loop()
     setGunColor();
 
     // button pressed
-    if ((digitalRead(trigger) == LOW) && (bullets != 0) && (digitalRead(reload) == HIGH))
+
+    //&& (digitalRead(reload) == HIGH)
+    if ((digitalRead(trigger) == LOW) && (bullets != 0) )
     {
        digitalWrite(haptic1, HIGH);
        digitalWrite(haptic2, HIGH);
 
-       Serial.println("button pressed!");
+       
        // take away bullets
        bullets--;
        deletebullets(bullets);
@@ -255,10 +264,10 @@ void Emitter::loop()
     }
 
     // if reloading
-    if (digitalRead(reload) == LOW)
+    if (digitalRead(reload) == HIGH)
     {
         // delay till done reloading
-        while(digitalRead(reload) == LOW)
+        while(digitalRead(reload) == HIGH)
         {
 
         }
