@@ -38,8 +38,8 @@ void setup() {
   //lcdScreen.setup();
   //lcdTFT.setup();
   // Menu.setup();
-  //emitter.setup();
-  reciever.setup();
+  emitter.setup();
+  //reciever.setup();
 }
 
 void loop() {
@@ -49,8 +49,8 @@ void loop() {
   //espNowSender.loop();
   //espNowReceiver.loop();
   //Menu.loop();
-  //emitter.loop();
-  reciever.loop();
+  emitter.loop();
+  //reciever.loop();
 }
 
 
