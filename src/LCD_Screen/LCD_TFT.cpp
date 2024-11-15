@@ -4,7 +4,7 @@
 #include "LCD_TFT.h"
 
 // Define the pins for the TFT display
-#define TFT_CS 5
+#define TFT_CS 19
 #define TFT_RST 17
 #define TFT_DC 16
 #define TFT_SCLK 18

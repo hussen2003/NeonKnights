@@ -221,20 +221,19 @@ int health = 0;
 void Emitter::loop()
 {
 
-   if (health <= 0)
-   {
+    if (health <= 0)
+    {
         SetColor(HIGH, LOW, LOW);
         while (health <= 0)
         {
             // take info from main hub
         }
-    
-   }
-   setGunColor();
+    }
+    setGunColor();
 
-       // button pressed
-       if ((digitalRead(trigger) == LOW) && (bullets != 0) && (digitalRead(reload) == HIGH))
-   {
+    // button pressed
+    if ((digitalRead(trigger) == LOW) && (bullets != 0) && (digitalRead(reload) == HIGH))
+    {
        digitalWrite(haptic1, HIGH);
        digitalWrite(haptic2, HIGH);
 
