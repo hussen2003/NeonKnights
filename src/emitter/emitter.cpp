@@ -4,7 +4,22 @@
 #include <Adafruit_ST7735.h>
 #include <SPI.h>
 #include <./LCD_Screen/LCD_TFT.h>
+#include <esp_now.h>
+#include <WiFi.h>
 //#include <./reciever/espNowReceiver.h>
+
+// Structure to receive game-related data
+typedef struct input_data
+{
+    bool hasGameStarted;
+    int team1Color;
+    int team2Color;
+} input_data;
+
+input_data receivedData;
+
+// needs to be changed when programming to gun1 and gun2
+int gun = 1;
 
 LCD_TFT LcdTFT;
 
@@ -22,6 +37,53 @@ const int frequency = 38000; // 38kHz frequency
 const int ledChannel = 0;    // Channel 0 for LEDC PWM
 const int resolution = 8;    // 8-bit resolution (0-255)
 
+int bullets = 12;
+int originalhealth = 0;
+int health = 0;
+int color = -1; // white
+
+// callback when data is received
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
+{
+    memcpy(&receivedData, incomingData, sizeof(receivedData));
+    Serial.print("Bytes received: ");
+    Serial.println(len);
+    Serial.print("Game Started: ");
+    Serial.println(receivedData.hasGameStarted ? "Yes" : "No");
+    Serial.print("Color: ");
+    // get team color
+    if(gun == 1)
+    {
+        color = receivedData.team1Color;
+    }
+    if(gun == 2)
+    {
+        color = receivedData.team2Color;
+    }
+
+    // get vest originalhealth & health
+
+}
+
+void espNowSetup()
+{
+    // Init Serial Monitor
+    Serial.begin(115200);
+
+    // Set device as a Wi-Fi Station
+    WiFi.mode(WIFI_STA);
+
+    // Init ESP-NOW
+    if (esp_now_init() != ESP_OK)
+    {
+        Serial.println("Error initializing ESP-NOW");
+        return;
+    }
+
+    // Register for Receive callback
+    esp_now_register_recv_cb(OnDataRecv);
+}
+
 void Emitter::setup()
 {
     Serial.begin(115200);
@@ -35,6 +97,9 @@ void Emitter::setup()
 
     // Attach PWM pin to the LEDC channel
     ledcAttachPin(pwmPin, ledChannel);
+
+    // espnow setup
+    espNowSetup();
 
     LcdTFT.setup();
     LcdTFT.tft.fillScreen(ST7735_BLACK);
@@ -133,27 +198,26 @@ void changecolor(int color)
     {
         setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
     }
+    else // WHITE COLOR
+    {
+        setColor(HIGH, HIGH, HIGH);
+    }
 }
 
-int bullets = 12;
-int originalhealth = 100;
-int health = 0;
-char color[10] = "blue";
-char red[10] = "red";
 
 void Emitter::loop()
 {
-
-   deletehearts(originalhealth,health);
+    // if dead
    if (health <= 0)
    {
-        ledcolor(red);
+        // color red then delay while respawning
+        changecolor(0);
         while (health <= 0)
         {
-            // take info from main hub
+            // take info from main hub until it changes health
         }
-        ledcolor(color);
    }
+   changecolor(color);
 
     // button pressed 
     if ((digitalRead(trigger) == LOW) && (bullets != 0) && (digitalRead(reload) == HIGH))

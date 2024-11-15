@@ -42,7 +42,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
     Serial.print("\r\nLast Packet Send Status:\t");
     Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
-int color;
+int color = -1;
 
 
 // callback when data is received
@@ -235,6 +235,10 @@ void changecolor(int color)
     else if (color == 5) //cyan
     {
         setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
+    }
+    else // White Color
+    {
+        setColor(HIGH, HIGH, HIGH);
     }
 }
 
