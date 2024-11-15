@@ -120,6 +120,69 @@ int Player2Kills = 0;
 int Player2Deaths = 0;
 double Player2kd = 0.0;
 
+String getteamcolor(int team)
+{
+    int red = 0;
+    int green = 0;
+    int blue = 0;
+
+    if (team == 1)
+    {
+        // Set colors
+        if (Team1Color == "blue")
+        {
+            int blue = 255;
+        }
+        else if (Team1Color == "green")
+        {
+            int green = 255;
+        }
+        else if (Team1Color ==  "yellow")
+        {
+            int red = 255;
+            int green = 255;
+        }
+        else if (Team1Color ==  "purple")
+        {
+            int red = 255;
+            int blue = 255;
+        }
+        else if (Team1Color ==  "cyan")
+        {
+            int green = 255;
+            int blue = 255;
+        }
+    }
+    else if (team == 2)
+    {
+        // Set colors
+        if (Team2Color == "blue")
+        {
+            int blue = 255;
+        }
+        else if (Team2Color == "green")
+        {
+            int green = 255;
+        }
+        else if (Team2Color ==  "yellow")
+        {
+            int red = 255;
+            int green = 255;
+        }
+        else if (Team2Color ==  "purple")
+        {
+            int red = 255;
+            int blue = 255;
+        }
+        else if (Team2Color ==  "cyan")
+        {
+            int green = 255;
+            int blue = 255;
+        }
+    }
+    return "rgba(" + String(red) + ", " + String(green) + ", " + String(blue) + ", 0.6)";
+}
+
 // Function to return HTML content
 String getHTML()
 {
@@ -201,7 +264,7 @@ String getHTML()
                     gap: 50px;  /* Add gap between the teams containers */
                 }
                 .team1{
-                    background-color: rgb(0, 0, 0);
+                    background-color: )rawliteral" + getteamcolor(1) + R"rawliteral(;
                     padding: 20px; 
                     border-radius: 10px;
                     width: 100%;
@@ -212,7 +275,7 @@ String getHTML()
                     align-items: center;     /* Center align items horizontally */
                 }
                 .team2{
-                    background-color: rgb(0, 0, 0);
+                    background-color: )rawliteral" + getteamcolor(2) + R"rawliteral(;
                     padding: 20px; 
                     border-radius: 10px;
                     width: 100%;
@@ -401,8 +464,7 @@ String getHTML()
 
                 <div class="teambox">
                 
-                    <div class="team1" style="background-color: )rawliteral" +
-                  String(gameData.color1) + R"rawliteral( ;">
+                    <div class="team1">
                         <div class="stat" id="t1n">
                             )rawliteral" +
                   Team1Name + R"rawliteral(
@@ -443,8 +505,7 @@ String getHTML()
                         </div>
                     </div>
 
-                    <div class="team2" style="background-color: )rawliteral" +
-                  String(gameData.color2) + R"rawliteral( ;">
+                    <div class="team2">
                         <div class="stat" id="t2n">
                             )rawliteral" +
                   Team2Name + R"rawliteral(
