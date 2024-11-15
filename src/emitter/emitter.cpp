@@ -54,6 +54,9 @@ void resetbullets ()
         LcdTFT.tft.fillCircle(x+10,y+2.5,2.5,ST7735_YELLOW);
         y += 10;
     }
+
+    LcdTFT.tft.setCursor(50,64);
+    LcdTFT.tft.printf("Bullets: %d",12);
 }
 
 void resethearts ()
@@ -76,6 +79,9 @@ void deletebullets (int bullets)
     int y2 = 10*deleted;
 
     LcdTFT.tft.fillRect(5,10,13,y2,ST7735_BLACK);
+
+    LcdTFT.tft.setCursor(50,64);
+    LcdTFT.tft.printf("Bullets: %d",12);
 }
 
 void deletehearts (int originalhealth, int health)
@@ -129,18 +135,17 @@ int bullets = 12;
 int originalhealth = 100;
 int health = 0;
 char color[10] = "blue";
+char red[10] = "red";
 
 void Emitter::loop()
 {
     // take in info from the main hub
     // update health
-    
-
 
    deletehearts(originalhealth,health);
    if (health <= 0)
    {
-        ledcolor("red");
+        ledcolor(red);
         while (health <= 0)
         {
             // take info from main hub
