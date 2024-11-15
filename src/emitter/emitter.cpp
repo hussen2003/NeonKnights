@@ -6,20 +6,33 @@
 #include <./LCD_Screen/LCD_TFT.h>
 #include <esp_now.h>
 #include <WiFi.h>
-//#include <./reciever/espNowReceiver.h>
 
-// Structure to receive game-related data
+
+int id = 1;
+
 typedef struct input_data
 {
     bool hasGameStarted;
-    int team1Color;
-    int team2Color;
+    char color1[10];
+    char color2[10]; // Color for Team 2
 } input_data;
 
-input_data receivedData;
+input_data RecievedData;
 
-// needs to be changed when programming to gun1 and gun2
-int gun = 1;
+esp_now_peer_info_t peerGunInfo;
+
+void OnGunDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
+{
+    memcpy(&RecievedData, incomingData, sizeof(RecievedData));
+    Serial.print("Bytes received: ");
+    Serial.println(len);
+    Serial.print("Game Started: ");
+    Serial.println(RecievedData.hasGameStarted ? "Yes" : "No");
+    Serial.print("Color 1: ");
+    Serial.println(RecievedData.color1);
+    Serial.print("Color 2: ");
+    Serial.println(RecievedData.color2);
+}
 
 LCD_TFT LcdTFT;
 
@@ -37,56 +50,95 @@ const int frequency = 38000; // 38kHz frequency
 const int ledChannel = 0;    // Channel 0 for LEDC PWM
 const int resolution = 8;    // 8-bit resolution (0-255)
 
-int bullets = 12;
-int originalhealth = 0;
-int health = 0;
-int color = -1; // white
-
-// callback when data is received
-void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
+void SetColor(int red, int green, int blue)
 {
-    memcpy(&receivedData, incomingData, sizeof(receivedData));
-    Serial.print("Bytes received: ");
-    Serial.println(len);
-    Serial.print("Game Started: ");
-    Serial.println(receivedData.hasGameStarted ? "Yes" : "No");
-    Serial.print("Color: ");
-    // get team color
-    if(gun == 1)
-    {
-        color = receivedData.team1Color;
-    }
-    if(gun == 2)
-    {
-        color = receivedData.team2Color;
-    }
-
-    // get vest originalhealth & health
-
+    // Set all LEDs to the specified color
+    digitalWrite(led_R, red);
+    digitalWrite(led_G, green);
+    digitalWrite(led_B, blue);
 }
 
-void espNowSetup()
+void setGunColor()
 {
-    // Init Serial Monitor
-    Serial.begin(115200);
-
-    // Set device as a Wi-Fi Station
-    WiFi.mode(WIFI_STA);
-
-    // Init ESP-NOW
-    if (esp_now_init() != ESP_OK)
+    if (RecievedData.hasGameStarted)
     {
-        Serial.println("Error initializing ESP-NOW");
-        return;
+        // Check which ID we are dealing with
+        if (id == 1 && strlen(RecievedData.color1) > 0)
+        {
+            // Set color based on RecievedData.color1
+            if (strcmp(RecievedData.color1, "blue") == 0)
+            {
+                SetColor(LOW, LOW, HIGH); // Set LEDs to blue
+            }
+            else if (strcmp(RecievedData.color1, "green") == 0)
+            {
+                SetColor(LOW, HIGH, LOW); // Set LEDs to green
+            }
+            else if (strcmp(RecievedData.color1, "yellow") == 0)
+            {
+                SetColor(HIGH, HIGH, LOW); // Set LEDs to yellow
+            }
+            else if (strcmp(RecievedData.color1, "purple") == 0)
+            {
+                SetColor(HIGH, LOW, HIGH); // Set LEDs to purple
+            }
+            else if (strcmp(RecievedData.color1, "cyan") == 0)
+            {
+                SetColor(LOW, HIGH, HIGH); // Set LEDs to cyan
+            }
+        }
+        else if (id == 2 && strlen(RecievedData.color2) > 0)
+        {
+            // Set color based on RecievedData.color2
+            if (strcmp(RecievedData.color2, "blue") == 0)
+            {
+                SetColor(LOW, LOW, HIGH); // Set LEDs to blue
+            }
+            else if (strcmp(RecievedData.color2, "green") == 0)
+            {
+                SetColor(LOW, HIGH, LOW); // Set LEDs to green
+            }
+            else if (strcmp(RecievedData.color2, "yellow") == 0)
+            {
+                SetColor(HIGH, HIGH, LOW); // Set LEDs to yellow
+            }
+            else if (strcmp(RecievedData.color2, "purple") == 0)
+            {
+                SetColor(HIGH, LOW, HIGH); // Set LEDs to purple
+            }
+            else if (strcmp(RecievedData.color2, "cyan") == 0)
+            {
+                SetColor(LOW, HIGH, HIGH); // Set LEDs to cyan
+            }
+        }
     }
+}
 
-    // Register for Receive callback
-    esp_now_register_recv_cb(OnDataRecv);
+void EspNowGunReceiverSetup()
+{
+  // Initialize Serial Monitor
+  Serial.begin(115200);
+
+  // Set device as a Wi-Fi Station
+  WiFi.mode(WIFI_AP_STA);
+
+  // Init ESP-NOW
+  if (esp_now_init() != ESP_OK)
+  {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+  Serial.println("ESP-NOW started");
+
+  // Once ESPNow is successfully Init, we will register for recv CB to
+  // get recv packer info
+  esp_now_register_recv_cb(esp_now_recv_cb_t(OnGunDataRecv));
 }
 
 void Emitter::setup()
 {
     Serial.begin(115200);
+    EspNowGunReceiverSetup();
     pinMode(trigger, INPUT_PULLUP);
     pinMode(reload, INPUT_PULLUP);
     pinMode(haptic1, OUTPUT);
@@ -97,9 +149,6 @@ void Emitter::setup()
 
     // Attach PWM pin to the LEDC channel
     ledcAttachPin(pwmPin, ledChannel);
-
-    // espnow setup
-    espNowSetup();
 
     LcdTFT.setup();
     LcdTFT.tft.fillScreen(ST7735_BLACK);
@@ -164,82 +213,46 @@ void deletehearts (int originalhealth, int health)
     LcdTFT.tft.printf("Health:%d",originalhealth);
 }
 
-void setColor(int red, int green, int blue)
-{
-    // Set all LEDs to the specified color
-    digitalWrite(led_R, red);
-    digitalWrite(led_G, green);
-    digitalWrite(led_B, blue);
-}
 
-void changecolor(int color)
-{
-    if (color == 0) // red
-    {
-        setColor(LOW, LOW, HIGH); // Set LEDs to blue
-    }
-    else if (color == 1) //blue
-    {
-        setColor(LOW, LOW, HIGH); // Set LEDs to blue
-    }
-    else if (color == 2) //green
-    {
-        setColor(LOW, HIGH, LOW); // Set LEDs to green
-    }
-    else if (color == 3) //yellow
-    {
-        setColor(HIGH, HIGH, LOW); // Set LEDs to yellow
-    }
-    else if (color == 4) //purple
-    {
-        setColor(HIGH, LOW, HIGH); // Set LEDs to purple
-    }
-    else if (color == 5) //cyan
-    {
-        setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
-    }
-    else // WHITE COLOR
-    {
-        setColor(HIGH, HIGH, HIGH);
-    }
-}
-
+int bullets = 12;
+int originalhealth = 100;
+int health = 0;
 
 void Emitter::loop()
 {
-    // if dead
+
    if (health <= 0)
    {
-        // color red then delay while respawning
-        changecolor(0);
+        SetColor(HIGH, LOW, LOW);
         while (health <= 0)
         {
-            // take info from main hub until it changes health
+            // take info from main hub
         }
+    
    }
-   changecolor(color);
+   setGunColor();
 
-    // button pressed 
-    if ((digitalRead(trigger) == LOW) && (bullets != 0) && (digitalRead(reload) == HIGH))
-    {
-        digitalWrite(haptic1, HIGH);
-        digitalWrite(haptic2, HIGH);
+       // button pressed
+       if ((digitalRead(trigger) == LOW) && (bullets != 0) && (digitalRead(reload) == HIGH))
+   {
+       digitalWrite(haptic1, HIGH);
+       digitalWrite(haptic2, HIGH);
 
-        Serial.println("button pressed!");
-        // take away bullets
-        bullets--;
-        deletebullets(bullets);
+       Serial.println("button pressed!");
+       // take away bullets
+       bullets--;
+       deletebullets(bullets);
 
-        // Start PWM signal on the PWM pin at 38kHz
-        ledcWriteTone(ledChannel, frequency);
-        delay(100); // Send signal for 100ms
+       // Start PWM signal on the PWM pin at 38kHz
+       ledcWriteTone(ledChannel, frequency);
+       delay(100); // Send signal for 100ms
 
-        // Stop the PWM signal
-        ledcWrite(ledChannel, 0); // Set duty cycle to 0 to stop the signal
-        delay(100);               // Debounce delay
+       // Stop the PWM signal
+       ledcWrite(ledChannel, 0); // Set duty cycle to 0 to stop the signal
+       delay(100);               // Debounce delay
 
-        digitalWrite(haptic1, LOW);
-        digitalWrite(haptic2, LOW);
+       digitalWrite(haptic1, LOW);
+       digitalWrite(haptic2, LOW);
     }
 
     // if reloading

@@ -16,8 +16,8 @@ uint8_t vestMacAddresses[2][6] = {
 typedef struct input_data
 {
     bool hasGameStarted;
-    int team1Color;
-    int team2Color;
+    char color1[10]; // Color for Team 1
+    char color2[10]; // Color for Team 2
 } input_data;
 
 input_data gameData;
@@ -82,8 +82,7 @@ void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len
 // Callback function when data is sent
 void OnDataSentHub(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-    // Serial.print("\r\nLast Packet Send Status:\t");
-    // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
 // Replace with your network credentials
@@ -578,18 +577,19 @@ void EspNowLoop()
 
 
 void sendGameData()
-{   
-    for (int i = 0; i < 2; i++)
+{
+    for (int i = 0; i < 2; i++) // Iterate through all MAC addresses
     {
         esp_err_t result = esp_now_send(vestMacAddresses[i], (uint8_t *)&gameData, sizeof(gameData));
-
         if (result == ESP_OK)
         {
-            // Serial.printf("Game data sent successfully to vest %d\n", i + 1);
+            Serial.print("Game data sent to vest ");
+            Serial.println(i + 1);
         }
         else
         {
-            //.printf("Error sending game data to vest %d\n", i + 1);
+            Serial.print("Error sending to vest ");
+            Serial.println(i + 1);
         }
     }
 }
@@ -627,65 +627,51 @@ void MainHub::setup()
     // Handle form submission
     Server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request)
               {
-        if (request->hasParam("gamemode", true)) 
-            Gamemode = request->getParam("gamemode", true)->value();
-        if (request->hasParam("team1name", true)) 
-            Team1Name = request->getParam("team1name", true)->value();
-        if (request->hasParam("team1color", true)) 
-            Team1Color = request->getParam("team1color", true)->value();
-        if (request->hasParam("player1name", true)) 
-            Player1Name = request->getParam("player1name", true)->value();
-        if (request->hasParam("player1health", true))
-        {
-            Player1Health = request->getParam("player1health", true)->value().toInt();        // Convert to int
-            Player1InitialHealth = request->getParam("player1health", true)->value().toInt(); // Convert to int
-        }  
-        if (request->hasParam("player1damage", true)) 
-            Player1Damage = request->getParam("player1damage", true)->value().toInt();  // Convert to int
-        if (request->hasParam("team2name", true)) 
-            Team2Name = request->getParam("team2name", true)->value();
-        if (request->hasParam("team2color", true)) 
-            Team2Color = request->getParam("team2color", true)->value();
-        if (request->hasParam("player2name", true)) 
-            Player2Name = request->getParam("player2name", true)->value();
-        if (request->hasParam("player2health", true)) 
-        {
-            Player2Health = request->getParam("player2health", true)->value().toInt(); // Convert to int
-            Player2InitialHealth = request->getParam("player2health", true)->value().toInt(); // Convert to int
-        }
-            
-        if (request->hasParam("player2damage", true)) 
-            Player2Damage = request->getParam("player2damage", true)->value().toInt();  // Convert to int
-
+    if (request->hasParam("gamemode", true)) 
+        Gamemode = request->getParam("gamemode", true)->value();
+    if (request->hasParam("team1name", true)) 
+        Team1Name = request->getParam("team1name", true)->value();
+    if (request->hasParam("team1color", true)) 
+    {
+        Team1Color = request->getParam("team1color", true)->value();
+        strcpy(gameData.color1, Team1Color.c_str()); // Store Team 1 color in the global variable
+    }
+    if (request->hasParam("player1name", true)) 
+        Player1Name = request->getParam("player1name", true)->value();
+    if (request->hasParam("player1health", true))
+    {
+        Player1Health = request->getParam("player1health", true)->value().toInt();        // Convert to int
+        Player1InitialHealth = request->getParam("player1health", true)->value().toInt(); // Convert to int
+    }  
+    if (request->hasParam("player1damage", true)) 
+        Player1Damage = request->getParam("player1damage", true)->value().toInt();  // Convert to int
+    if (request->hasParam("team2name", true)) 
+        Team2Name = request->getParam("team2name", true)->value();
+    if (request->hasParam("team2color", true)) 
+    {
+        Team2Color = request->getParam("team2color", true)->value();
+        strcpy(gameData.color2, Team2Color.c_str()); // Store Team 2 color in the global variable
+    }
+    if (request->hasParam("player2name", true)) 
+        Player2Name = request->getParam("player2name", true)->value();
+    if (request->hasParam("player2health", true)) 
+    {
+        Player2Health = request->getParam("player2health", true)->value().toInt(); // Convert to int
+        Player2InitialHealth = request->getParam("player2health", true)->value().toInt(); // Convert to int
+    }
         
-        Serial.println("Game setup confirmed:");
-        if(Team1Color == "blue")
-        {
-            gameData.team1Color = 1;
-        }
-        if(Team1Color == "green")
-        {
-            gameData.team1Color = 2;
-        }
-        if(Team1Color == "yellow")
-        {
-            gameData.team1Color = 3;
-        }
-        if (Team1Color == "purple")
-        {
-            gameData.team1Color = 4;
-        }
-        if (Team1Color == "cyan")
-        {
-            gameData.team1Color = 5;
-        }
-        
-        Serial.print("Gamemode: " + Gamemode);
-        Serial.print("player 1 color: " + Team1Color);
-        Serial.print("player 2 color: " + Team2Color);
-        Serial.println();
+    if (request->hasParam("player2damage", true)) 
+        Player2Damage = request->getParam("player2damage", true)->value().toInt();  // Convert to int
 
-        request->send(200, "text/plain", "Data received"); });
+    
+    Serial.println("Game setup confirmed:");
+    Serial.print("Gamemode: " + Gamemode);
+    Serial.print("Team 1 color: " + Team1Color);
+    Serial.print("Team 2 color: " + Team2Color);
+    Serial.println();
+
+    // Send a response back to the client
+    request->send(200, "text/plain", "Data received"); });
 
     Server.on("/endgame", HTTP_POST, [](AsyncWebServerRequest *request)
               {

@@ -9,8 +9,6 @@ Reciever::Reciever() {}
 // uint8_t broadcastAddress[] = {0xFC, 0xB4, 0x67, 0x74, 0x4B, 0xE0};
 uint8_t broadcastAddress[] = {0xfc, 0xB4, 0x67, 0x72, 0x7c, 0x94};
 
-
-
 // Structure to send data (same as before)
 typedef struct struct_message
 {
@@ -25,8 +23,8 @@ typedef struct struct_message
 typedef struct input_data
 {
     bool hasGameStarted;
-    int team1Color;
-    int team2Color;
+    char color1[10];
+    char color2[10]; // Color for Team 2
 } input_data;
 
 // Create instances of structs
@@ -42,9 +40,6 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
     Serial.print("\r\nLast Packet Send Status:\t");
     Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
-int color = -1;
-
-
 // callback when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
@@ -53,17 +48,10 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
     Serial.println(len);
     Serial.print("Game Started: ");
     Serial.println(receivedData.hasGameStarted ? "Yes" : "No");
-    Serial.print("Color: ");
-
-    if(myData.id == 1)
-    {
-        color = receivedData.team1Color;
-    }
-    if(myData.id == 2)
-    {
-        color = receivedData.team2Color;
-    }
-
+    Serial.print("Color 1: ");
+    Serial.println(receivedData.color1);
+    Serial.print("Color 2: ");
+    Serial.println(receivedData.color2);
 }
 
 void espNowSetup()
@@ -203,6 +191,62 @@ void setColor(int red, int green, int blue)
     digitalWrite(led4_B, blue);
 }
 
+void setVestColor()
+{
+    if (receivedData.hasGameStarted)
+    {
+        // Check which ID we are dealing with
+        if (myData.id == 1 && strlen(receivedData.color1) > 0)
+        {
+            // Set color based on receivedData.color1
+            if (strcmp(receivedData.color1, "blue") == 0)
+            {
+                setColor(LOW, LOW, HIGH); // Set LEDs to blue
+            }
+            else if (strcmp(receivedData.color1, "green") == 0)
+            {
+                setColor(LOW, HIGH, LOW); // Set LEDs to green
+            }
+            else if (strcmp(receivedData.color1, "yellow") == 0)
+            {
+                setColor(HIGH, HIGH, LOW); // Set LEDs to yellow
+            }
+            else if (strcmp(receivedData.color1, "purple") == 0)
+            {
+                setColor(HIGH, LOW, HIGH); // Set LEDs to purple
+            }
+            else if (strcmp(receivedData.color1, "cyan") == 0)
+            {
+                setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
+            }
+        }
+        else if (myData.id == 2 && strlen(receivedData.color2) > 0)
+        {
+            // Set color based on receivedData.color2
+            if (strcmp(receivedData.color2, "blue") == 0)
+            {
+                setColor(LOW, LOW, HIGH); // Set LEDs to blue
+            }
+            else if (strcmp(receivedData.color2, "green") == 0)
+            {
+                setColor(LOW, HIGH, LOW); // Set LEDs to green
+            }
+            else if (strcmp(receivedData.color2, "yellow") == 0)
+            {
+                setColor(HIGH, HIGH, LOW); // Set LEDs to yellow
+            }
+            else if (strcmp(receivedData.color2, "purple") == 0)
+            {
+                setColor(HIGH, LOW, HIGH); // Set LEDs to purple
+            }
+            else if (strcmp(receivedData.color2, "cyan") == 0)
+            {
+                setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
+            }
+        }
+    }
+}
+
 void Reciever::setup()
 {
     Serial.begin(115200);
@@ -210,37 +254,6 @@ void Reciever::setup()
     espNowSetup();
 }
 
-void changecolor(int color)
-{
-    if (color == 0) // red
-    {
-        setColor(LOW, LOW, HIGH); // Set LEDs to blue
-    }
-    else if (color == 1) //blue
-    {
-        setColor(LOW, LOW, HIGH); // Set LEDs to blue
-    }
-    else if (color == 2) //green
-    {
-        setColor(LOW, HIGH, LOW); // Set LEDs to green
-    }
-    else if (color == 3) //yellow
-    {
-        setColor(HIGH, HIGH, LOW); // Set LEDs to yellow
-    }
-    else if (color == 4) //purple
-    {
-        setColor(HIGH, LOW, HIGH); // Set LEDs to purple
-    }
-    else if (color == 5) //cyan
-    {
-        setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
-    }
-    else // White Color
-    {
-        setColor(HIGH, HIGH, HIGH);
-    }
-}
 
 void Reciever::loop()
 {
@@ -256,29 +269,34 @@ void Reciever::loop()
     myData.reciever3Value = reciever3Value;
     myData.reciever4Value = reciever4Value;
 
-    // if any zone gets shot change color to red delay then change back to teamcolor after
     if (reciever1Value == 0)
     {
-        changecolor(0);
+        digitalWrite(led1_R, HIGH);
+        digitalWrite(led1_B, LOW);
+        digitalWrite(led1_G, LOW);
         delay(100);
     }
     if (reciever2Value == 0)
     {
-        changecolor(0);
+        digitalWrite(led2_R, HIGH);
+        digitalWrite(led2_B, LOW);
+        digitalWrite(led2_G, LOW);
         delay(100);
     }
     if (reciever3Value == 0)
     {
-        changecolor(0);
+        digitalWrite(led3_R, HIGH);
+        digitalWrite(led3_B, LOW);
+        digitalWrite(led3_G, LOW);
         delay(100);
     }
     if (reciever4Value == 0)
     {
-        changecolor(0);;
+        digitalWrite(led4_R, HIGH);
+        digitalWrite(led4_B, LOW);
+        digitalWrite(led4_G, LOW);
         delay(100);
     }
-    changecolor(color);
 
-    // Debugging: Print the color received
-    Serial.printf("Color: %s\n", color);
+    setVestColor();
 }
