@@ -99,43 +99,39 @@ void deletehearts (int originalhealth, int health)
     LcdTFT.tft.printf("Health:%d",originalhealth);
 }
 
-void ledcolor(char color[10])
+void setColor(int red, int green, int blue)
 {
-    if (strcmp(color,"red"))
+    // Set all LEDs to the specified color
+    digitalWrite(led_R, red);
+    digitalWrite(led_G, green);
+    digitalWrite(led_B, blue);
+}
+
+void changecolor(int color)
+{
+    if (color == 0) // red
     {
-        digitalWrite(led_R, HIGH);
-        digitalWrite(led_G, LOW);
-        digitalWrite(led_B, LOW);
+        setColor(LOW, LOW, HIGH); // Set LEDs to blue
     }
-    else if (strcmp(color,"blue"))
+    else if (color == 1) //blue
     {
-        digitalWrite(led_R, LOW);
-        digitalWrite(led_G, LOW);
-        digitalWrite(led_B, HIGH);
+        setColor(LOW, LOW, HIGH); // Set LEDs to blue
     }
-    else if (strcmp(color, "green"))
+    else if (color == 2) //green
     {
-        digitalWrite(led_R, LOW);
-        digitalWrite(led_G, HIGH);
-        digitalWrite(led_B, LOW);
+        setColor(LOW, HIGH, LOW); // Set LEDs to green
     }
-    else if (strcmp(color,"yellow"))
+    else if (color == 3) //yellow
     {
-        digitalWrite(led_R, HIGH);
-        digitalWrite(led_G, HIGH);
-        digitalWrite(led_B, LOW);
+        setColor(HIGH, HIGH, LOW); // Set LEDs to yellow
     }
-    else if (strcmp(color,"purple"))
+    else if (color == 4) //purple
     {
-        digitalWrite(led_R, HIGH);
-        digitalWrite(led_G, LOW);
-        digitalWrite(led_B, HIGH);
+        setColor(HIGH, LOW, HIGH); // Set LEDs to purple
     }
-    else if (strcmp(color, "cyan"))
+    else if (color == 5) //cyan
     {
-        digitalWrite(led_R, LOW);
-        digitalWrite(led_G, HIGH);
-        digitalWrite(led_B, HIGH);
+        setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
     }
 }
 

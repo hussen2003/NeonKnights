@@ -210,51 +210,13 @@ void Reciever::setup()
     espNowSetup();
 }
 
-void Reciever::loop()
+void changecolor(int color)
 {
-    espNowLoop();
-
-    int reciever1Value = digitalRead(reciever1);
-    int reciever2Value = digitalRead(reciever2);
-    int reciever3Value = digitalRead(reciever3);
-    int reciever4Value = digitalRead(reciever4);
-
-    myData.reciever1Value = reciever1Value;
-    myData.reciever2Value = reciever2Value;
-    myData.reciever3Value = reciever3Value;
-    myData.reciever4Value = reciever4Value;
-
-    if (reciever1Value == 0)
+    if (color == 0) // red
     {
-        digitalWrite(led1_R, HIGH);
-        digitalWrite(led1_B, LOW);
-        digitalWrite(led1_G, LOW);
-        delay(100);
+        setColor(LOW, LOW, HIGH); // Set LEDs to blue
     }
-    if (reciever2Value == 0)
-    {
-        digitalWrite(led2_R, HIGH);
-        digitalWrite(led2_B, LOW);
-        digitalWrite(led2_G, LOW);
-        delay(100);
-    }
-    if (reciever3Value == 0)
-    {
-        digitalWrite(led3_R, HIGH);
-        digitalWrite(led3_B, LOW);
-        digitalWrite(led3_G, LOW);
-        delay(100);
-    }
-    if (reciever4Value == 0)
-    {
-        digitalWrite(led4_R, HIGH);
-        digitalWrite(led4_B, LOW);
-        digitalWrite(led4_G, LOW);
-        delay(100);
-    }
-
-    // Check the color received and set the LED outputs accordingly
-    if (color == 1) //blue
+    else if (color == 1) //blue
     {
         setColor(LOW, LOW, HIGH); // Set LEDs to blue
     }
@@ -274,6 +236,45 @@ void Reciever::loop()
     {
         setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
     }
+}
+
+void Reciever::loop()
+{
+    espNowLoop();
+
+    int reciever1Value = digitalRead(reciever1);
+    int reciever2Value = digitalRead(reciever2);
+    int reciever3Value = digitalRead(reciever3);
+    int reciever4Value = digitalRead(reciever4);
+
+    myData.reciever1Value = reciever1Value;
+    myData.reciever2Value = reciever2Value;
+    myData.reciever3Value = reciever3Value;
+    myData.reciever4Value = reciever4Value;
+
+    // if any zone gets shot change color to red delay then change back to teamcolor after
+    if (reciever1Value == 0)
+    {
+        changecolor(0);
+        delay(100);
+    }
+    if (reciever2Value == 0)
+    {
+        changecolor(0);
+        delay(100);
+    }
+    if (reciever3Value == 0)
+    {
+        changecolor(0);
+        delay(100);
+    }
+    if (reciever4Value == 0)
+    {
+        changecolor(0);;
+        delay(100);
+    }
+    changecolor(color);
+
     // Debugging: Print the color received
     Serial.printf("Color: %s\n", color);
 }
