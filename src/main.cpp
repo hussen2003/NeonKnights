@@ -7,7 +7,6 @@
 // #include <./emitter/espNowSender.h>
 #include <./emitter/emitter.h>
 #include <./reciever/reciever.h>
-#include <./LCD_Screen/LCD_Screen.h>
 #include <./LCD_Screen/LCD_TFT.h>
 #include <./LCD_Screen/menu.h>
 
@@ -22,7 +21,6 @@ GetMacAddress getMacAddress;
 MainHub mainHub;
 //EspNowReceiver espNowReceiver;
 //EspNowSender espNowSender;
-LCD_Screen lcdScreen;
 LCD_TFT lcdTFT;
 menu Menu;
 Emitter emitter;
