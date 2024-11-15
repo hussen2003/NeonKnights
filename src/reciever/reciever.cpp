@@ -12,7 +12,7 @@ uint8_t broadcastAddress[] = {0xfc, 0xB4, 0x67, 0x72, 0x7c, 0x94};
 // Structure to send data (same as before)
 typedef struct struct_message
 {
-    int id = 2; // must be unique for each sender board
+    int id = 1; // must be unique for each sender board
     int reciever1Value;
     int reciever2Value;
     int reciever3Value;
@@ -263,13 +263,7 @@ void Reciever::loop()
         {
             setColor(LOW, HIGH, HIGH); // Set LEDs to cyan
         }
-        else
-        {
-            // If the color is not recognized, turn off the LEDs
-            // setColor(LOW, LOW, LOW);
-        }
     }
-    delay(100);
     // Debugging: Print the color received
     Serial.printf("Color: %s\n", receivedData.color);
 }

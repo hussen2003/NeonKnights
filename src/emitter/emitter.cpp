@@ -26,7 +26,6 @@ void Emitter::setup()
 {
     Serial.begin(115200);
     pinMode(trigger, INPUT_PULLUP);
-    pinMode(led, OUTPUT);
     pinMode(haptic1, OUTPUT);
     pinMode(haptic2, OUTPUT);
 

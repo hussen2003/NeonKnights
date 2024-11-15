@@ -99,7 +99,7 @@ int Player1Health;
 int Player2Health;
 int Player1Damage;
 int Player2Damage;
-String Team1Name = "test";
+String Team1Name = "";
 String Team1Color = "";
 String Player1Name = "";
 
