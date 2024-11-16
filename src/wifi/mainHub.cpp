@@ -843,7 +843,6 @@ void MainHub::loop()
             Player2Kills++;    // Player 2 gets a kill
             Player1Deaths++;   // Player 1 has died
             // sendColorToVest(1, "white"); // Player 1 is dead, update Player 1's vest color to white
-            Team1Color = "red";
             sendGameData();
             UpdateWebpage();
             delay(5000); // Wait for 5 seconds before respawning Player 1
@@ -861,7 +860,6 @@ void MainHub::loop()
             Player2Deaths++;   // Player 2 has died
             // updateKD();
             //  sendColorToVest(2, "white"); // Player 2 is dead, update Player 2's vest color to white
-            Team2Color = "red";
             sendGameData();
             UpdateWebpage();
             delay(5000); // Wait for 5 seconds before respawning Player 2

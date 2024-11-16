@@ -46,8 +46,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 }
 // callback when data is received
 
-int Originalhealth = 100;
-int Health = 100;
+
 
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
@@ -60,6 +59,14 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
     Serial.println(receivedData.color1);
     Serial.print("Color 2: ");
     Serial.println(receivedData.color2);
+    Serial.print("Health1: ");
+    Serial.println(receivedData.health1);
+    Serial.print("OriginalHealth1: ");
+    Serial.println(receivedData.originalHealth1);
+    Serial.print("Health2: ");
+    Serial.println(receivedData.health2);
+    Serial.print("OriginalHealth2: ");
+    Serial.println(receivedData.originalHealth2);
 }
 
 void espNowSetup()
@@ -208,12 +215,8 @@ void setVestColor()
         // Check which ID we are dealing with
         if (myData.id == 1 && strlen(receivedData.color1) > 0)
         {
-            if (strcmp(receivedData.color1, "red") == 0)
-            {
-                setColor(HIGH, LOW, LOW); // Set LEDs to blue
-            }
-            // Set color based on receivedData.color1
-            else if (strcmp(receivedData.color1, "blue") == 0)
+        
+            if (strcmp(receivedData.color1, "blue") == 0)
             {
                 setColor(LOW, LOW, HIGH); // Set LEDs to blue
             }
@@ -236,12 +239,8 @@ void setVestColor()
         }
         else if (myData.id == 2 && strlen(receivedData.color2) > 0)
         {
-            // Set color based on receivedData.color2
-            if (strcmp(receivedData.color2, "red") == 0)
-            {
-                setColor(HIGH, LOW, LOW); // Set LEDs to blue
-            }
-            else if (strcmp(receivedData.color2, "blue") == 0)
+         
+            if (strcmp(receivedData.color2, "blue") == 0)
             {
                 setColor(LOW, LOW, HIGH); // Set LEDs to blue
             }
@@ -264,6 +263,40 @@ void setVestColor()
         }
     }
 }
+int Originalhealth = 100;
+int Health = 100;
+int LastHealth = -1; // Initialize to an impossible value
+
+void updateHealthinfo()
+{
+    if (myData.id == 1)
+    {
+        if (receivedData.originalHealth1 > 0)
+        {
+            Health = receivedData.health1;
+            Originalhealth = receivedData.originalHealth1;
+        }
+        else
+        {
+            Serial.println("Error: Received invalid originalHealth1");
+        }
+    }
+    else if (myData.id == 2)
+    {
+        if (receivedData.originalHealth2 > 0)
+        {
+            Health = receivedData.health2;
+        }
+        else
+        {
+            Serial.println("Error: Received invalid originalHealth2");
+        }
+    }
+    if (Health == Originalhealth && Health != LastHealth)
+    {
+        LastHealth = Health;
+    }
+}
 
 void Reciever::setup()
 {
@@ -275,7 +308,23 @@ void Reciever::setup()
 
 void Reciever::loop()
 {
+
+    setVestColor();
+
     espNowLoop();
+    updateHealthinfo();
+
+    // Only update the display when health changes
+    if (Health != LastHealth)
+    {
+        LastHealth = Health; // Update the last health value
+    }
+    while (Health == 0)
+    {
+        Serial.println("DEATH!!!!");
+        setColor(HIGH, LOW, LOW);
+        updateHealthinfo();
+    }
 
     int reciever1Value = digitalRead(reciever1);
     int reciever2Value = digitalRead(reciever2);
@@ -316,5 +365,4 @@ void Reciever::loop()
         delay(100);
     }
 
-    setVestColor();
 }
