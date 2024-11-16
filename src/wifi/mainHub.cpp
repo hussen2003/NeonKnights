@@ -90,7 +90,7 @@ void OnDataSentHub(const uint8_t *mac_addr, esp_now_send_status_t status)
 }
 
 // Replace with your network credentials
-const char *Ssid = "NEONKNIGHTS";
+const char *Ssid = "TEST";
 const char *Password = "neonknights";
 
 // Create an AsyncWebServer object on port 80
@@ -466,7 +466,7 @@ String getHTML()
     <h1>Neon Knights Laser Tag</h1>
     <div class="teambox">
 
-        <div class="team1">
+        <div class="team1" style="background-color: ")rawliteral" + getteamcolor(1) + R"rawliteral(;>
             <div class="stat" id="t1n">
                 <!-- Insert Team 1 Name -->
                 )rawliteral" +
@@ -512,7 +512,7 @@ String getHTML()
             </div>
         </div>
 
-        <div class="team2">
+        <div class="team2"  style="background-color: ")rawliteral" + getteamcolor(1) + R"rawliteral(;>
             <div class="stat" id="t2n">
                 <!-- Insert Team 2 Name -->
                 )rawliteral" +
@@ -576,14 +576,15 @@ void UpdateWebpage()
     json += "\"p1n\":\"" + Player1Name + "\",";
     json += "\"player1kills\":" + String(Player1Kills) + ",";
     json += "\"player1deaths\":" + String(Player1Deaths) + ",";
-    json += "\"player1kd\":" + String((float)Player1Kills / max(1, Player1Deaths)) + ",";
+    //json += "\"player1kd\":" + String((float)Player1Kills / max(1, Player1Deaths)) + ",";
     json += "\"t2n\":\"" + Team2Name + "\",";
     json += "\"p2n\":\"" + Player2Name + "\",";
     json += "\"player2kills\":" + String(Player2Kills) + ",";
     json += "\"player2deaths\":" + String(Player2Deaths) + ",";
-    json += "\"player2kd\":" + String((float)Player2Kills / max(1, Player2Deaths));
+    //json += "\"player2kd\":" + String((float)Player2Kills / max(1, Player2Deaths));
     json += "}";
 
+    Serial.println(json);
     ws.textAll(json);
 }
 
@@ -701,7 +702,9 @@ void MainHub::setup()
     Serial.println(WiFi.softAPgetStationNum()); // Number of connected clients
     // Serve HTML page on root URL
     Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(200, "text/html", getHTML()); });
+    {
+        request->send(200, "text/html", getHTML());
+    });
 
     if (!SPIFFS.begin(true))
     {
@@ -717,70 +720,71 @@ void MainHub::setup()
 
     // Handle form submission
     Server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request)
-              {
-    if (request->hasParam("gamemode", true)) 
-        Gamemode = request->getParam("gamemode", true)->value();
-    if (request->hasParam("team1name", true)) 
-        Team1Name = request->getParam("team1name", true)->value();
-    if (request->hasParam("team1color", true)) 
     {
-        Team1Color = request->getParam("team1color", true)->value();
-        strcpy(gameData.color1, Team1Color.c_str()); // Store Team 1 color in the global variable
-    }
-    if (request->hasParam("player1name", true)) 
-        Player1Name = request->getParam("player1name", true)->value();
-    if (request->hasParam("player1health", true))
-    {
-        Player1Health = request->getParam("player1health", true)->value().toInt();        // Convert to int
-        Player1InitialHealth = request->getParam("player1health", true)->value().toInt(); // Convert to int
-        gameData.originalHealth1 = Player1InitialHealth;
-    }  
-    if (request->hasParam("player1damage", true)) 
-        Player1Damage = request->getParam("player1damage", true)->value().toInt();  // Convert to int
-    if (request->hasParam("team2name", true)) 
-        Team2Name = request->getParam("team2name", true)->value();
-    if (request->hasParam("team2color", true)) 
-    {
-        Team2Color = request->getParam("team2color", true)->value();
-        strcpy(gameData.color2, Team2Color.c_str()); // Store Team 2 color in the global variable
-    }
-    if (request->hasParam("player2name", true)) 
-        Player2Name = request->getParam("player2name", true)->value();
-    if (request->hasParam("player2health", true)) 
-    {
-        Player2Health = request->getParam("player2health", true)->value().toInt(); // Convert to int
-        Player2InitialHealth = request->getParam("player2health", true)->value().toInt(); // Convert to int
-        gameData.originalHealth2 = Player2InitialHealth;
-    }
-        
-    if (request->hasParam("player2damage", true)) 
-        Player2Damage = request->getParam("player2damage", true)->value().toInt();  // Convert to int
+        if (request->hasParam("gamemode", true)) 
+            Gamemode = request->getParam("gamemode", true)->value();
+        if (request->hasParam("team1name", true)) 
+            Team1Name = request->getParam("team1name", true)->value();
+        if (request->hasParam("team1color", true)) 
+        {
+            Team1Color = request->getParam("team1color", true)->value();
+            strcpy(gameData.color1, Team1Color.c_str()); // Store Team 1 color in the global variable
+        }
+        if (request->hasParam("player1name", true)) 
+            Player1Name = request->getParam("player1name", true)->value();
+        if (request->hasParam("player1health", true))
+        {
+            Player1Health = request->getParam("player1health", true)->value().toInt();        // Convert to int
+            Player1InitialHealth = request->getParam("player1health", true)->value().toInt(); // Convert to int
+            gameData.originalHealth1 = Player1InitialHealth;
+        }  
+        if (request->hasParam("player1damage", true)) 
+            Player1Damage = request->getParam("player1damage", true)->value().toInt();  // Convert to int
+        if (request->hasParam("team2name", true)) 
+            Team2Name = request->getParam("team2name", true)->value();
+        if (request->hasParam("team2color", true)) 
+        {
+            Team2Color = request->getParam("team2color", true)->value();
+            strcpy(gameData.color2, Team2Color.c_str()); // Store Team 2 color in the global variable
+        }
+        if (request->hasParam("player2name", true)) 
+            Player2Name = request->getParam("player2name", true)->value();
+        if (request->hasParam("player2health", true)) 
+        {
+            Player2Health = request->getParam("player2health", true)->value().toInt(); // Convert to int
+            Player2InitialHealth = request->getParam("player2health", true)->value().toInt(); // Convert to int
+            gameData.originalHealth2 = Player2InitialHealth;
+        }
+            
+        if (request->hasParam("player2damage", true)) 
+            Player2Damage = request->getParam("player2damage", true)->value().toInt();  // Convert to int
 
     
-    Serial.println("Game setup confirmed:");
-    Serial.print("Gamemode: " + Gamemode);
-    Serial.print("Team 1 color: " + Team1Color);
-    Serial.print("Team 2 color: " + Team2Color);
-    Serial.println();
+        Serial.println("Game setup confirmed:");
+        Serial.print("Gamemode: " + Gamemode);
+        Serial.print("Team 1 color: " + Team1Color);
+        Serial.print("Team 2 color: " + Team2Color);
+        Serial.println();
 
-    // Send a response back to the client
-    request->send(200, "text/plain", "Data received"); });
+        // Send a response back to the client
+        request->send(200, "text/plain", "Data received");
+    });
 
     Server.on("/endgame", HTTP_POST, [](AsyncWebServerRequest *request)
-              {
-                  gameData.hasGameStarted = false; // Set the game end flag
-                  Gamemode = "";
-                  Player1Kills = 0;
-                  Player1Deaths = 0;
-                  Player1kd = 0.0;
+    {
+        gameData.hasGameStarted = false; // Set the game end flag
+        Gamemode = "";
+        Player1Kills = 0;
+        Player1Deaths = 0;
+        Player1kd = 0.0;
 
-                  Player2Kills = 0;
-                  Player2Deaths = 0;
-                  Player2kd = 0.0;
-                  Serial.println("Game has ended");
-                  request->send(200, "text/plain", "Game ended"); // Send confirmation response
+        Player2Kills = 0;
+        Player2Deaths = 0;
+        Player2kd = 0.0;
+        Serial.println("Game has ended");
+        request->send(200, "text/plain", "Game ended"); // Send confirmation response
 
-              });
+    });
 
     // Start server
     Server.begin();
