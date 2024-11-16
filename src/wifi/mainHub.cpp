@@ -8,10 +8,11 @@
 MainHub::MainHub() {};
 
 // List of vests' MAC Addresses
-uint8_t vestMacAddresses[3][6] = {
+uint8_t vestMacAddresses[4][6] = {
     {0xD0, 0xEF, 0x76, 0x14, 0xf6, 0x1C},  // First vest MAC address
     {0xD0, 0xEF, 0x76, 0x15, 0x37, 0x84},  // Second vest MAC address (example)
-    {0xD0, 0xEF, 0x76, 0x14, 0xfa, 0x10}}; // first gun MAC address
+    {0xD0, 0xEF, 0x76, 0x14, 0xfa, 0x10},  // first gun mac
+    {0xD0, 0xEF, 0x76, 0x15, 0x62, 0xBC}}; // second gun MAC address
 
 typedef struct input_data
 {
@@ -42,7 +43,7 @@ typedef struct struct_message
 
 extern struct_message myData;
 
-esp_now_peer_info_t peerInfoHub[3]; // Array to hold peer information for multiple vests
+esp_now_peer_info_t peerInfoHub[4]; // Array to hold peer information for multiple vests
 
 // Create a structure to hold the readings from each board
 struct_message board1;
@@ -137,17 +138,17 @@ String getteamcolor(int team)
         {
             int green = 255;
         }
-        else if (Team1Color ==  "yellow")
+        else if (Team1Color == "yellow")
         {
             int red = 255;
             int green = 255;
         }
-        else if (Team1Color ==  "purple")
+        else if (Team1Color == "purple")
         {
             int red = 255;
             int blue = 255;
         }
-        else if (Team1Color ==  "cyan")
+        else if (Team1Color == "cyan")
         {
             int green = 255;
             int blue = 255;
@@ -164,17 +165,17 @@ String getteamcolor(int team)
         {
             int green = 255;
         }
-        else if (Team2Color ==  "yellow")
+        else if (Team2Color == "yellow")
         {
             int red = 255;
             int green = 255;
         }
-        else if (Team2Color ==  "purple")
+        else if (Team2Color == "purple")
         {
             int red = 255;
             int blue = 255;
         }
-        else if (Team2Color ==  "cyan")
+        else if (Team2Color == "cyan")
         {
             int green = 255;
             int blue = 255;
@@ -264,7 +265,8 @@ String getHTML()
                     gap: 50px;  /* Add gap between the teams containers */
                 }
                 .team1{
-                    background-color: )rawliteral" + getteamcolor(1) + R"rawliteral(;
+                    background-color: )rawliteral" +
+                  getteamcolor(1) + R"rawliteral(;
                     padding: 20px; 
                     border-radius: 10px;
                     width: 100%;
@@ -275,7 +277,8 @@ String getHTML()
                     align-items: center;     /* Center align items horizontally */
                 }
                 .team2{
-                    background-color: )rawliteral" + getteamcolor(2) + R"rawliteral(;
+                    background-color: )rawliteral" +
+                  getteamcolor(2) + R"rawliteral(;
                     padding: 20px; 
                     border-radius: 10px;
                     width: 100%;
@@ -460,117 +463,136 @@ String getHTML()
             </div>
 
             <div class="scoreboard">
-                <h1>Neon Knights Laser Tag</h1>
+    <h1>Neon Knights Laser Tag</h1>
+    <div class="teambox">
 
-                <div class="teambox">
-                
-                    <div class="team1">
-                        <div class="stat" id="t1n">
-                            )rawliteral" +
+        <div class="team1">
+            <div class="stat" id="t1n">
+                <!-- Insert Team 1 Name -->
+                )rawliteral" +
                   Team1Name + R"rawliteral(
-                        </div>
-
-                        <div class="statbox">
-                            <div class="stat">
-                                PlayerName
-                            </div>
-                            <div class="stat">
-                                Score
-                            </div>
-                            <div class="stat">
-                                Kills
-                            </div>
-                            <div class="stat">
-                                Deaths
-                            </div>
-                        </div>
-
-                        <div class="statbox">
-                            <div class="stat" id="p1n">
-                                )rawliteral" +
-                  Player1Name + R"rawliteral(
-                            </div>
-                            <div class="stat" id="player1kills">
-                                )rawliteral" +
-                  Player1Kills + R"rawliteral(
-                            </div>
-                            <div class="stat" id="player1deaths">
-                                )rawliteral" +
-                  Player1Deaths + R"rawliteral(
-                            </div>
-                            <div class="stat" id="player1score">
-                                )rawliteral" +
-                  Player1kd + R"rawliteral(
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="team2">
-                        <div class="stat" id="t2n">
-                            )rawliteral" +
-                  Team2Name + R"rawliteral(
-                        </div>
-
-                        <div class="statbox">
-                            <div class="stat">
-                                PlayerName
-                            </div>
-                            <div class="stat">
-                                Score
-                            </div>
-                            <div class="stat">
-                                Kills
-                            </div>
-                            <div class="stat">
-                                Deaths
-                            </div>
-                        </div>
-
-                        <div class="statbox">
-                            <div class="stat"  id="p2n">
-                                )rawliteral" +
-                  Player2Name + R"rawliteral(
-                            </div>
-                            <div class="stat" id="player2kills">
-                                )rawliteral" +
-                  Player2Kills + R"rawliteral(
-                            </div>
-                            <div class="stat" id="player2deaths">
-                                )rawliteral" +
-                  Player2Deaths + R"rawliteral(
-                            </div>
-                            <div class="stat" id="kd">
-                                )rawliteral" +
-                  Player2kd + R"rawliteral(
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="endgame()">End Game</button>
             </div>
-        </body>
-        </html>
+
+            <div class="statbox">
+                <div class="stat">
+                    PlayerName
+                </div>
+                <div class="stat">
+                    Kills
+                </div>
+                <div class="stat">
+                    Deaths
+                </div>
+                <div class="stat">
+                    K/D
+                </div>
+            </div>
+
+            <div class="statbox">
+                <div class="stat" id="p1n">
+                    <!-- Insert Player 1 Name -->
+                    )rawliteral" +
+                  Player1Name + R"rawliteral(
+                </div>
+                <div class="stat" id="player1kills">
+                    <!-- Insert Player 1 Kills -->
+                    )rawliteral" +
+                  Player1Kills + R"rawliteral(
+                </div>
+                <div class="stat" id="player1deaths">
+                    <!-- Insert Player 1 Deaths -->
+                    )rawliteral" +
+                  Player1Deaths + R"rawliteral(
+                </div>
+                <div class="stat" id="kd">
+                    <!-- Insert Player 1 Score -->
+                    )rawliteral" +
+                  Player1kd + R"rawliteral(
+                </div>
+            </div>
+        </div>
+
+        <div class="team2">
+            <div class="stat" id="t2n">
+                <!-- Insert Team 2 Name -->
+                )rawliteral" +
+                  Team2Name + R"rawliteral(
+            </div>
+
+            <div class="statbox">
+                <div class="stat">
+                    PlayerName
+                </div>
+                <div class="stat">
+                    Kills
+                </div>
+                <div class="stat">
+                    Deaths
+                </div>
+                <div class="stat">
+                    Score
+                </div>
+            </div>
+
+            <div class="statbox">
+                <div class="stat"  id="p2n">
+                    <!-- Insert Player 2 Name -->
+                    )rawliteral" +
+                  Player2Name + R"rawliteral(
+                </div>
+                <div class="stat" id="player2kills">
+                    <!-- Insert Player 2 Kills -->
+                    )rawliteral" +
+                  Player2Kills + R"rawliteral(
+                </div>
+                <div class="stat" id="player2deaths">
+                    <!-- Insert Player 2 Deaths -->
+                    )rawliteral" +
+                  Player2Deaths + R"rawliteral(
+                </div>
+                <div class="stat" id="kd">
+                    <!-- Insert Player 2 Score -->
+                    )rawliteral" +
+                  Player2kd + R"rawliteral(
+                </div>
+            </div>
+        </div>
+    </div>
+    <button onclick="endgame()">End Game</button>
+</div>
+</body>
+</html>
+
     )rawliteral";
     return html;
 }
 
+unsigned long lastUpdate = 0;
+const unsigned long updateInterval = 1000; // 1 second
+
 void UpdateWebpage()
 {
-    String json = "{";
-    json += "\"t1n\":\"" + Team1Name + "\",";
-    json += "\"p1n\":\"" + Player1Name + "\",";
-    json += "\"player1score\":" + String(Player1kd) + ",";
-    json += "\"player1kills\":" + String(Player1Kills) + ",";
-    json += "\"player1deaths\":" + String(Player1Deaths) + ",";
-    json += "\"t2n\":\"" + Team2Name + "\",";
+    Serial.println("UPDATE WEBPAGE!!!");
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastUpdate >= updateInterval)
+    {
+        lastUpdate = currentMillis;
 
-    json += "\"p2n\":\"" + Player2Name + "\",";
-    json += "\"player2score\":" + String(Player2kd) + ",";
-    json += "\"player2kills\":" + String(Player2Kills) + ",";
-    json += "\"player2deaths\":" + String(Player2Deaths);
-    json += "}";
+        String json = "{";
+        json += "\"t1n\":\"" + Team1Name + "\",";
+        json += "\"p1n\":\"" + Player1Name + "\",";
+        json += "\"player1kills\":" + String(Player1Kills) + ",";
+        json += "\"player1deaths\":" + String(Player1Deaths) + ",";
+        json += "\"player1kd\":" + String((float)Player1Kills / max(1, Player1Deaths)) + ",";
+        json += "\"t2n\":\"" + Team2Name + "\",";
+        json += "\"p2n\":\"" + Player2Name + "\",";
+        json += "\"player2kills\":" + String(Player2Kills) + ",";
+        json += "\"player2deaths\":" + String(Player2Deaths) + ",";
+        json += "\"player2kd\":" + String((float)Player2Kills / max(1, Player2Deaths));
+        json += "}";
 
-    ws.textAll(json);
+        ws.textAll(json);
+    }
 }
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
@@ -599,7 +621,7 @@ void EspNowSetup()
     esp_now_register_recv_cb(OnDataRecvHub);
 
     // Add peers (vests) to the list
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 4; i++)
     {
         memcpy(peerInfoHub[i].peer_addr, vestMacAddresses[i], 6);
         peerInfoHub[i].channel = 0;
@@ -625,7 +647,7 @@ void EspNowSetup()
 void EspNowLoop()
 {
     // Send board data to each vest
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 4; i++)
     {
         esp_err_t result = esp_now_send(vestMacAddresses[i], (uint8_t *)&myData, sizeof(myData));
 
@@ -646,7 +668,7 @@ void sendGameData()
     gameData.health1 = Player1Health;
     gameData.health2 = Player2Health;
 
-    for (int i = 0; i < 3; i++) // Iterate through all MAC addresses
+    for (int i = 0; i < 4; i++) // Iterate through all MAC addresses
     {
         esp_err_t result = esp_now_send(vestMacAddresses[i], (uint8_t *)&gameData, sizeof(gameData));
         if (result == ESP_OK)
@@ -663,19 +685,28 @@ void sendGameData()
     delay(100);
 }
 
-
 void MainHub::setup()
 {
     Serial.begin(115200);
 
     // Set up WiFi in Station Mode
-    WiFi.mode(WIFI_AP_STA); // Station mode for ESP-NOW compatibility
+    WiFi.mode(WIFI_AP_STA);
+
+    // Static IP configuration
+    IPAddress local_IP(192, 168, 4, 1);
+    IPAddress gateway(192, 168, 4, 1);
+    IPAddress subnet(255, 255, 255, 0);
+    WiFi.softAPConfig(local_IP, gateway, subnet);
 
     // Set up the access point
-    WiFi.softAP(Ssid, Password); // The fourth argument (0) makes the SSID visible
+    WiFi.softAP(Ssid, Password);
+    delay(5000); // Wait for AP to stabilize
     Serial.println("Access Point started");
     Serial.print("IP address: ");
     Serial.println(WiFi.softAPIP());
+
+    Serial.println("Connected clients:");
+    Serial.println(WiFi.softAPgetStationNum()); // Number of connected clients
     // Serve HTML page on root URL
     Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
               { request->send(200, "text/html", getHTML()); });
@@ -745,7 +776,8 @@ void MainHub::setup()
 
     Server.on("/endgame", HTTP_POST, [](AsyncWebServerRequest *request)
               {
-                  // gameData.hasGameStarted = false; // Set the game end flag
+                  gameData.hasGameStarted = false; // Set the game end flag
+                  Gamemode = "";
                   Serial.println("Game has ended");
                   request->send(200, "text/plain", "Game ended"); // Send confirmation response
               });
@@ -784,8 +816,7 @@ void updateKD()
 
 void MainHub::loop()
 {
-    //EspNowLoop(); // Handles sending and receiving via ESP-NOW
-
+    // EspNowLoop(); // Handles sending and receiving via ESP-NOW
     if (Gamemode == "freeforall")
     {
         sendGameData(); // Send game data to vests
@@ -812,6 +843,9 @@ void MainHub::loop()
             Player2Kills++;    // Player 2 gets a kill
             Player1Deaths++;   // Player 1 has died
             // sendColorToVest(1, "white"); // Player 1 is dead, update Player 1's vest color to white
+            Team1Color = "red";
+            sendGameData();
+            UpdateWebpage();
             delay(5000); // Wait for 5 seconds before respawning Player 1
             // updateKD();
             //  Respawn Player 1 by resetting their health
@@ -827,6 +861,9 @@ void MainHub::loop()
             Player2Deaths++;   // Player 2 has died
             // updateKD();
             //  sendColorToVest(2, "white"); // Player 2 is dead, update Player 2's vest color to white
+            Team2Color = "red";
+            sendGameData();
+            UpdateWebpage();
             delay(5000); // Wait for 5 seconds before respawning Player 2
 
             // Respawn Player 2 by resetting their health
@@ -834,7 +871,6 @@ void MainHub::loop()
             // sendColorToVest(2, "green");          // Change Player 2's vest color back to green
         }
         // Update the webpage with the latest stats
-        UpdateWebpage();
 
         // Debugging: Print received values
         Serial.printf("Vest 1 Reciever 1: %d Vest 2 Reciever 1: %d\n", board1.reciever1Value, board2.reciever1Value);
@@ -848,7 +884,9 @@ void MainHub::loop()
         Serial.println("Player 1 Health: " + String(Player1Health));
         Serial.println("Player 2 Health: " + String(Player2Health));
         Serial.println("Player 1 Kills: " + String(Player1Kills));
+        Serial.println("Player 1 Deaths: " + String(Player1Deaths));
         Serial.println("Player 2 Kills: " + String(Player2Kills));
+        Serial.println("Player 2 Deaths: " + String(Player2Deaths));
     }
 
     // if (Gamemode == "targetpractice")

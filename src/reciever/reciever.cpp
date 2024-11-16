@@ -12,7 +12,7 @@ uint8_t broadcastAddress[] = {0xfc, 0xB4, 0x67, 0x72, 0x7c, 0x94};
 // Structure to send data (same as before)
 typedef struct struct_message
 {
-    int id = 2; // must be unique for each sender board
+    int id = 1; // must be unique for each sender board
     int reciever1Value;
     int reciever2Value;
     int reciever3Value;
@@ -45,6 +45,10 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
     Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 // callback when data is received
+
+int Originalhealth = 100;
+int Health = 100;
+
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
     memcpy(&receivedData, incomingData, sizeof(receivedData));
@@ -95,6 +99,8 @@ void espNowSetup()
 void espNowLoop()
 {
     Serial.printf("Data ID sent: %d\n", myData.id);
+
+
 
     // Send message via ESP-NOW
     esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
@@ -202,8 +208,12 @@ void setVestColor()
         // Check which ID we are dealing with
         if (myData.id == 1 && strlen(receivedData.color1) > 0)
         {
+            if (strcmp(receivedData.color1, "red") == 0)
+            {
+                setColor(HIGH, LOW, LOW); // Set LEDs to blue
+            }
             // Set color based on receivedData.color1
-            if (strcmp(receivedData.color1, "blue") == 0)
+            else if (strcmp(receivedData.color1, "blue") == 0)
             {
                 setColor(LOW, LOW, HIGH); // Set LEDs to blue
             }
@@ -227,7 +237,11 @@ void setVestColor()
         else if (myData.id == 2 && strlen(receivedData.color2) > 0)
         {
             // Set color based on receivedData.color2
-            if (strcmp(receivedData.color2, "blue") == 0)
+            if (strcmp(receivedData.color2, "red") == 0)
+            {
+                setColor(HIGH, LOW, LOW); // Set LEDs to blue
+            }
+            else if (strcmp(receivedData.color2, "blue") == 0)
             {
                 setColor(LOW, LOW, HIGH); // Set LEDs to blue
             }

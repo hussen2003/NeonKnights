@@ -7,8 +7,7 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-
-int id = 1;
+int id = 2;
 
 typedef struct input_data
 {
@@ -58,8 +57,8 @@ const int haptic1 = 26;
 const int haptic2 = 4;
 
 int bullets = 12;
-int originalhealth = 0;
-int health = 0;
+int originalhealth = 100;
+int health = 100;
 
 const int pwmPin = 25;
 const int frequency = 38000; // 38kHz frequency
@@ -132,88 +131,110 @@ void setGunColor()
 
 void EspNowGunReceiverSetup()
 {
-  // Initialize Serial Monitor
-  Serial.begin(115200);
+    // Initialize Serial Monitor
+    Serial.begin(115200);
 
-  // Set device as a Wi-Fi Station
-  WiFi.mode(WIFI_AP_STA);
+    // Set device as a Wi-Fi Station
+    WiFi.mode(WIFI_AP_STA);
 
-  // Init ESP-NOW
-  if (esp_now_init() != ESP_OK)
-  {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-  }
-  Serial.println("ESP-NOW started");
+    // Init ESP-NOW
+    if (esp_now_init() != ESP_OK)
+    {
+        Serial.println("Error initializing ESP-NOW");
+        return;
+    }
+    Serial.println("ESP-NOW started");
 
-  // Once ESPNow is successfully Init, we will register for recv CB to
-  // get recv packer info
-  esp_now_register_recv_cb(esp_now_recv_cb_t(OnGunDataRecv));
+    // Once ESPNow is successfully Init, we will register for recv CB to
+    // get recv packer info
+    esp_now_register_recv_cb(esp_now_recv_cb_t(OnGunDataRecv));
 }
 
+int lastHealth = -1; // Initialize to an impossible value
 
-
-
-void resetbullets ()
+void resetbullets()
 {
     int x = 5;
     int y = 10;
 
-    for(int i = 0; i < 12; i++)
+    // Draw all bullets
+    for (int i = 0; i < 12; i++)
     {
-        LcdTFT.tft.fillRect(x,y,10,5,ST7735_YELLOW);
-        LcdTFT.tft.fillCircle(x+10,y+2.5,2.5,ST7735_YELLOW);
+        LcdTFT.tft.fillRect(x, y, 10, 5, ST7735_YELLOW);            // Bullet body
+        LcdTFT.tft.fillCircle(x + 10, y + 2.5, 2.5, ST7735_YELLOW); // Bullet head
         y += 10;
     }
 
-    LcdTFT.tft.fillRect(76, 50, 20, 10, ST7735_BLACK);
-    LcdTFT.tft.setCursor(30,50);
-    LcdTFT.tft.printf("Bullets:%d",12);
+    // Draw static label for bullets
+    LcdTFT.tft.fillRect(76, 50, 20, 10, ST7735_BLACK); // Clear old count
+    LcdTFT.tft.setCursor(30, 50);
+    LcdTFT.tft.setTextColor(ST7735_WHITE);
+    LcdTFT.tft.printf("Bullets: %d", bullets);
 }
 
-void resethearts ()
+void resethearts()
 {
-    int x = 120;
-    int y = 10;
+    int x = 120;                            // Fixed x-coordinate for hearts
+    int y = 10;                             // Starting y-coordinate
+    int heartsToDraw = originalhealth / 10; // Calculate the total number of hearts
 
-    for(int i = 0; i < 10; i++)
+    // Draw the required number of hearts
+    for (int i = 0; i < heartsToDraw; i++)
     {
-        LcdTFT.tft.fillCircle(x-2,y,2,ST7735_RED);
-        LcdTFT.tft.fillCircle(x+2,y,2,ST7735_RED);
-        LcdTFT.tft.fillTriangle(x-4,y,x+4,y,x,y+5,ST7735_RED);
-        y += 12;
+        int yPosition = y + (i * 12);                                                              // Position each heart vertically
+        LcdTFT.tft.fillCircle(x - 2, yPosition, 2, ST7735_RED);                                    // Left circle of heart
+        LcdTFT.tft.fillCircle(x + 2, yPosition, 2, ST7735_RED);                                    // Right circle of heart
+        LcdTFT.tft.fillTriangle(x - 4, yPosition, x + 4, yPosition, x, yPosition + 5, ST7735_RED); // Heart triangle
     }
 
-    LcdTFT.tft.fillRect(70, 80, 30, 10, ST7735_BLACK);
-    LcdTFT.tft.setCursor(30,80);
-    LcdTFT.tft.printf("Health:%d",originalhealth);
+    // Update the health display
+    LcdTFT.tft.fillRect(70, 80, 40, 10, ST7735_BLACK); // Clear old health value area
+    LcdTFT.tft.setCursor(30, 80);
+    LcdTFT.tft.setTextColor(ST7735_WHITE);
+    LcdTFT.tft.printf("Health:%d", originalhealth);
 }
 
-void deletebullets ()
+void deletebullets()
 {
     int deleted = 12 - bullets;
-    int y2 = 10*deleted;
+    int y = 10 * deleted;
 
-    LcdTFT.tft.fillRect(5,10,13,y2,ST7735_BLACK);
+    // Clear only the bullets that were "deleted"
+    LcdTFT.tft.fillRect(5, 10, 13, y, ST7735_BLACK);
 
-    LcdTFT.tft.fillRect(76,50,20,10,ST7735_BLACK);
-    LcdTFT.tft.setCursor(30,50);
-    LcdTFT.tft.printf("Bullets:%d",bullets);
+    // Update the bullet count
+    LcdTFT.tft.fillRect(76, 50, 20, 10, ST7735_BLACK); // Clear old count
+    LcdTFT.tft.setCursor(30, 50);
+    LcdTFT.tft.setTextColor(ST7735_WHITE);
+    LcdTFT.tft.printf("Bullets: %d", bullets);
 }
 
-void deletehearts ()
-{  
-    int y2 = (float)120*(1-((float)health/(float)originalhealth));
+void deletehearts()
+{
+    if (originalhealth == 0)
+    {
+        Serial.println("Error: originalhealth is 0!");
+        return; // Prevent division by zero
+    }
 
-    LcdTFT.tft.fillRect(116,8,124,y2-3,ST7735_BLACK);
+    // Calculate the number of hearts to be "removed" based on health percentage
+    int heartsToDelete = 10 - (health * 10) / originalhealth; // Calculate how many hearts to delete
+    int x = 120;                                              // x-coordinate for hearts
+    int y = 10;                                               // Starting y-coordinate for hearts
 
-    LcdTFT.tft.fillRect(70,80,30,10,ST7735_BLACK);
-    LcdTFT.tft.setCursor(30,80);
-    LcdTFT.tft.printf("Health:%d",originalhealth);
+    // Delete the required number of hearts
+    for (int i = 0; i < heartsToDelete; i++)
+    {
+        int yPosition = y + (i * 12);                                   // Position for each heart
+        LcdTFT.tft.fillRect(x - 4, yPosition - 2, 9, 10, ST7735_BLACK); // Clear the heart area
+    }
+
+    // Update the health display
+    LcdTFT.tft.fillRect(70, 80, 40, 10, ST7735_BLACK); // Clear old health value area
+    LcdTFT.tft.setCursor(30, 80);
+    LcdTFT.tft.setTextColor(ST7735_WHITE);
+    LcdTFT.tft.printf("Health:%d", health);
 }
-
-
-
 
 void Emitter::setup()
 {
@@ -223,6 +244,9 @@ void Emitter::setup()
     pinMode(reload, INPUT_PULLUP);
     pinMode(haptic1, OUTPUT);
     pinMode(haptic2, OUTPUT);
+    pinMode(led_R, OUTPUT);
+    pinMode(led_G, OUTPUT);
+    pinMode(led_B, OUTPUT);
 
     // Configure LEDC for PWM generation (Channel 0, frequency 38kHz, 8-bit resolution)
     ledcSetup(ledChannel, frequency, resolution);
@@ -237,79 +261,82 @@ void Emitter::setup()
 
     resethearts();
     resetbullets();
-
 }
 
 void updatehealthinfo()
 {
     if (id == 1)
     {
-        health = RecievedData.health1;
-        originalhealth = RecievedData.originalHealth1;
+        if (RecievedData.originalHealth1 > 0)
+        {
+            health = RecievedData.health1;
+            originalhealth = RecievedData.originalHealth1;
+        }
+        else
+        {
+            Serial.println("Error: Received invalid originalHealth1");
+        }
     }
     else if (id == 2)
     {
-        health = RecievedData.health2;
-        originalhealth = RecievedData.originalHealth2;
+        if (RecievedData.originalHealth2 > 0)
+        {
+            health = RecievedData.health2;
+            originalhealth = RecievedData.originalHealth2;
+        }
+        else
+        {
+            Serial.println("Error: Received invalid originalHealth2");
+        }
+    }
+    if (health == originalhealth && health != lastHealth)
+    {
+        resethearts();
+        lastHealth = health;
     }
 }
 
+unsigned long lastReloadTime = 0;
+const unsigned long debounceDelay = 200; // 200ms debounce time
+
 void Emitter::loop()
 {
+    setGunColor();
     updatehealthinfo();
-    deletehearts();
-    if (health <= 0)
+
+    // Only update the display when health changes
+    if (health != lastHealth)
+    {
+        deletehearts();
+        lastHealth = health; // Update the last health value
+    }
+    while (health == 0)
     {
         SetColor(HIGH, LOW, LOW);
-        while (health <= 0)
-        {
-            updatehealthinfo();
-            deletehearts();
-            Serial.println(health);
-            // take info from main hub
-        }
-        resethearts();
+        updatehealthinfo();
     }
-    setGunColor();
-
-    // button pressed
-
-    //&& (digitalRead(reload) == HIGH)
-    if ((digitalRead(trigger) == LOW) && (bullets != 0) )
+    // Button press logic
+    if ((digitalRead(trigger) == LOW) && (bullets != 0) && digitalRead(reload) == LOW)
     {
-       digitalWrite(haptic1, HIGH);
-       digitalWrite(haptic2, HIGH);
-       Serial.println("3");
+        digitalWrite(haptic1, HIGH);
+        digitalWrite(haptic2, HIGH);
 
-       // take away bullets
-       bullets--;
-       deletebullets();
+        bullets--;
+        deletebullets();
 
-       // Start PWM signal on the PWM pin at 38kHz
-       ledcWriteTone(ledChannel, frequency);
-       delay(100); // Send signal for 100ms
+        ledcWriteTone(ledChannel, frequency);
+        delay(100); // Send signal for 100ms
+        ledcWrite(ledChannel, 0);
+        delay(100);
 
-       // Stop the PWM signal
-       ledcWrite(ledChannel, 0); // Set duty cycle to 0 to stop the signal
-       delay(100);               // Debounce delay
-
-       digitalWrite(haptic1, LOW);
-       digitalWrite(haptic2, LOW);
+        digitalWrite(haptic1, LOW);
+        digitalWrite(haptic2, LOW);
     }
 
-    // if reloading
-    if (digitalRead(reload) == HIGH)
+    // Reload logic
+    if (digitalRead(reload) == HIGH && millis() - lastReloadTime > debounceDelay)
     {
-        Serial.println("4");
-
-        // delay till done reloading
-        while(digitalRead(reload) == HIGH)
-        {
-            updatehealthinfo();
-            deletehearts();
-            Serial.println("5");
-        }
-        //update bullets to 12
+        lastReloadTime = millis(); // Update the last reload time
         bullets = 12;
         resetbullets();
     }
