@@ -567,32 +567,24 @@ String getHTML()
     return html;
 }
 
-unsigned long lastUpdate = 0;
-const unsigned long updateInterval = 1000; // 1 second
-
 void UpdateWebpage()
 {
     Serial.println("UPDATE WEBPAGE!!!");
-    unsigned long currentMillis = millis();
-    if (currentMillis - lastUpdate >= updateInterval)
-    {
-        lastUpdate = currentMillis;
+    
+    String json = "{";
+    json += "\"t1n\":\"" + Team1Name + "\",";
+    json += "\"p1n\":\"" + Player1Name + "\",";
+    json += "\"player1kills\":" + String(Player1Kills) + ",";
+    json += "\"player1deaths\":" + String(Player1Deaths) + ",";
+    json += "\"player1kd\":" + String((float)Player1Kills / max(1, Player1Deaths)) + ",";
+    json += "\"t2n\":\"" + Team2Name + "\",";
+    json += "\"p2n\":\"" + Player2Name + "\",";
+    json += "\"player2kills\":" + String(Player2Kills) + ",";
+    json += "\"player2deaths\":" + String(Player2Deaths) + ",";
+    json += "\"player2kd\":" + String((float)Player2Kills / max(1, Player2Deaths));
+    json += "}";
 
-        String json = "{";
-        json += "\"t1n\":\"" + Team1Name + "\",";
-        json += "\"p1n\":\"" + Player1Name + "\",";
-        json += "\"player1kills\":" + String(Player1Kills) + ",";
-        json += "\"player1deaths\":" + String(Player1Deaths) + ",";
-        json += "\"player1kd\":" + String((float)Player1Kills / max(1, Player1Deaths)) + ",";
-        json += "\"t2n\":\"" + Team2Name + "\",";
-        json += "\"p2n\":\"" + Player2Name + "\",";
-        json += "\"player2kills\":" + String(Player2Kills) + ",";
-        json += "\"player2deaths\":" + String(Player2Deaths) + ",";
-        json += "\"player2kd\":" + String((float)Player2Kills / max(1, Player2Deaths));
-        json += "}";
-
-        ws.textAll(json);
-    }
+    ws.textAll(json);
 }
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
@@ -778,8 +770,16 @@ void MainHub::setup()
               {
                   gameData.hasGameStarted = false; // Set the game end flag
                   Gamemode = "";
+                  Player1Kills = 0;
+                  Player1Deaths = 0;
+                  Player1kd = 0.0;
+
+                  Player2Kills = 0;
+                  Player2Deaths = 0;
+                  Player2kd = 0.0;
                   Serial.println("Game has ended");
                   request->send(200, "text/plain", "Game ended"); // Send confirmation response
+
               });
 
     // Start server

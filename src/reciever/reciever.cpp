@@ -12,7 +12,7 @@ uint8_t broadcastAddress[] = {0xfc, 0xB4, 0x67, 0x72, 0x7c, 0x94};
 // Structure to send data (same as before)
 typedef struct struct_message
 {
-    int id = 1; // must be unique for each sender board
+    int id = 2; // must be unique for each sender board
     int reciever1Value;
     int reciever2Value;
     int reciever3Value;

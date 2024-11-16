@@ -27,15 +27,15 @@ Emitter emitter;
 Reciever reciever;
 
 void setup() {
-  mainHub.setup();
+  //mainHub.setup();
   //emitter.setup();
-  //reciever.setup();
+  reciever.setup();
 }
 
 void loop() {
-  mainHub.loop();
+  //mainHub.loop();
   //emitter.loop();
-  //reciever.loop();
+  reciever.loop();
 }
 
 
