@@ -12,7 +12,7 @@ uint8_t broadcastAddress[] = {0xfc, 0xB4, 0x67, 0x72, 0x7c, 0x94};
 // Structure to send data (same as before)
 typedef struct struct_message
 {
-    int id = 2; // must be unique for each sender board
+    int id = 1; // must be unique for each sender board
     int reciever1Value;
     int reciever2Value;
     int reciever3Value;
@@ -144,9 +144,10 @@ const int led4_R = 18;
 const int led4_G = 19;
 const int led4_B = 21;
 
+const int haptic = 23;
+
 void setupRecieversAndLed()
 {
-
     // Set receivers as input
     pinMode(reciever1, INPUT_PULLUP);
     pinMode(reciever2, INPUT_PULLUP);
@@ -169,6 +170,9 @@ void setupRecieversAndLed()
     pinMode(led4_R, OUTPUT);
     pinMode(led4_G, OUTPUT);
     pinMode(led4_B, OUTPUT);
+
+    pinMode(haptic, OUTPUT);
+    digitalWrite(haptic, LOW);
 
     // Initialize all RGB pins to LOW
     digitalWrite(led1_R, LOW);
@@ -341,13 +345,18 @@ void Reciever::loop()
         digitalWrite(led1_R, HIGH);
         digitalWrite(led1_B, LOW);
         digitalWrite(led1_G, LOW);
-        delay(100);
-    }
+
+        digitalWrite(haptic, HIGH);
+
+        delay(100);    }
     if (reciever2Value == 0)
     {
         digitalWrite(led2_R, HIGH);
         digitalWrite(led2_B, LOW);
         digitalWrite(led2_G, LOW);
+
+        digitalWrite(haptic, HIGH);
+
         delay(100);
     }
     if (reciever3Value == 0)
@@ -355,14 +364,22 @@ void Reciever::loop()
         digitalWrite(led3_R, HIGH);
         digitalWrite(led3_B, LOW);
         digitalWrite(led3_G, LOW);
+
+        digitalWrite(haptic, HIGH);
+
         delay(100);
+
     }
     if (reciever4Value == 0)
     {
         digitalWrite(led4_R, HIGH);
         digitalWrite(led4_B, LOW);
         digitalWrite(led4_G, LOW);
-        delay(100);
-    }
 
+        digitalWrite(haptic, HIGH);
+
+        delay(100);
+
+    }
+    digitalWrite(haptic, LOW);
 }

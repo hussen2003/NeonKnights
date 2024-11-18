@@ -4,6 +4,7 @@
 #include <esp_now.h>
 #include "mainHub.h"
 #include "SPIFFS.h"
+#include <ArduinoJson.h>
 
 MainHub::MainHub() {};
 
@@ -90,7 +91,7 @@ void OnDataSentHub(const uint8_t *mac_addr, esp_now_send_status_t status)
 }
 
 // Replace with your network credentials
-const char *Ssid = "TEST";
+const char *Ssid = "NEON KNIGHTS";
 const char *Password = "neonknights";
 
 // Create an AsyncWebServer object on port 80
@@ -328,18 +329,18 @@ String getHTML()
                 socket.onmessage = function(event) {
                     let data = JSON.parse(event.data);
                     
-                    // Update team and player elements based on received data
+                    // Update team and player details
                     document.getElementById("t1n").textContent = data.t1n;
                     document.getElementById("p1n").textContent = data.p1n;
-                    document.getElementById("player1score").textContent = data.player1score;
                     document.getElementById("player1kills").textContent = data.player1kills;
                     document.getElementById("player1deaths").textContent = data.player1deaths;
+                    document.getElementById("player1kd").textContent = data.player1kd; // Update K/D
 
                     document.getElementById("t2n").textContent = data.t2n;
                     document.getElementById("p2n").textContent = data.p2n;
-                    document.getElementById("player2score").textContent = data.player2score;
                     document.getElementById("player2kills").textContent = data.player2kills;
                     document.getElementById("player2deaths").textContent = data.player2deaths;
+                    document.getElementById("player2kd").textContent = data.player2kd; // Update K/D
                 };
 
                 socket.onclose = function(event) {
@@ -466,7 +467,8 @@ String getHTML()
     <h1>Neon Knights Laser Tag</h1>
     <div class="teambox">
 
-        <div class="team1" style="background-color: ")rawliteral" + getteamcolor(1) + R"rawliteral(;>
+        <div class="team1" style="background-color: ")rawliteral" +
+                  getteamcolor(1) + R"rawliteral(;>
             <div class="stat" id="t1n">
                 <!-- Insert Team 1 Name -->
                 )rawliteral" +
@@ -504,7 +506,7 @@ String getHTML()
                     )rawliteral" +
                   Player1Deaths + R"rawliteral(
                 </div>
-                <div class="stat" id="kd">
+                <div class="stat" id="player1kd">
                     <!-- Insert Player 1 Score -->
                     )rawliteral" +
                   Player1kd + R"rawliteral(
@@ -512,7 +514,8 @@ String getHTML()
             </div>
         </div>
 
-        <div class="team2"  style="background-color: ")rawliteral" + getteamcolor(1) + R"rawliteral(;>
+        <div class="team2"  style="background-color: ")rawliteral" +
+                  getteamcolor(1) + R"rawliteral(;>
             <div class="stat" id="t2n">
                 <!-- Insert Team 2 Name -->
                 )rawliteral" +
@@ -530,7 +533,7 @@ String getHTML()
                     Deaths
                 </div>
                 <div class="stat">
-                    Score
+                    K/D
                 </div>
             </div>
 
@@ -550,7 +553,7 @@ String getHTML()
                     )rawliteral" +
                   Player2Deaths + R"rawliteral(
                 </div>
-                <div class="stat" id="kd">
+                <div class="stat" id="player2kd">
                     <!-- Insert Player 2 Score -->
                     )rawliteral" +
                   Player2kd + R"rawliteral(
@@ -569,23 +572,28 @@ String getHTML()
 
 void UpdateWebpage()
 {
-    Serial.println("UPDATE WEBPAGE!!!");
-    
-    String json = "{";
-    json += "\"t1n\":\"" + Team1Name + "\",";
-    json += "\"p1n\":\"" + Player1Name + "\",";
-    json += "\"player1kills\":" + String(Player1Kills) + ",";
-    json += "\"player1deaths\":" + String(Player1Deaths) + ",";
-    //json += "\"player1kd\":" + String((float)Player1Kills / max(1, Player1Deaths)) + ",";
-    json += "\"t2n\":\"" + Team2Name + "\",";
-    json += "\"p2n\":\"" + Player2Name + "\",";
-    json += "\"player2kills\":" + String(Player2Kills) + ",";
-    json += "\"player2deaths\":" + String(Player2Deaths) + ",";
-    //json += "\"player2kd\":" + String((float)Player2Kills / max(1, Player2Deaths));
-    json += "}";
+    // Serial.println("UPDATE WEBPAGE!!!");
+    float Player1KD = (Player1Deaths == 0) ? Player1Kills : (float)Player1Kills / Player1Deaths;
+    float Player2KD = (Player2Deaths == 0) ? Player2Kills : (float)Player2Kills / Player2Deaths;
+
+    StaticJsonDocument<256> doc; // Adjust size as needed
+    doc["t1n"] = Team1Name;
+    doc["p1n"] = Player1Name;
+    doc["player1kills"] = Player1Kills;
+    doc["player1deaths"] = Player1Deaths;
+    doc["player1kd"] = String(Player1KD, 2); // Send with 2 decimal places
+
+    doc["t2n"] = Team2Name;
+    doc["p2n"] = Player2Name;
+    doc["player2kills"] = Player2Kills;
+    doc["player2deaths"] = Player2Deaths;
+    doc["player2kd"] = String(Player2KD, 2); // Send with 2 decimal places
+
+    String json;
+    serializeJson(doc, json);
 
     Serial.println(json);
-    ws.textAll(json);
+    ws.textAll(json); // Send to all WebSocket clients
 }
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
@@ -702,9 +710,7 @@ void MainHub::setup()
     Serial.println(WiFi.softAPgetStationNum()); // Number of connected clients
     // Serve HTML page on root URL
     Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-    {
-        request->send(200, "text/html", getHTML());
-    });
+              { request->send(200, "text/html", getHTML()); });
 
     if (!SPIFFS.begin(true))
     {
@@ -720,7 +726,7 @@ void MainHub::setup()
 
     // Handle form submission
     Server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request)
-    {
+              {
         if (request->hasParam("gamemode", true)) 
             Gamemode = request->getParam("gamemode", true)->value();
         if (request->hasParam("team1name", true)) 
@@ -767,24 +773,22 @@ void MainHub::setup()
         Serial.println();
 
         // Send a response back to the client
-        request->send(200, "text/plain", "Data received");
-    });
+        request->send(200, "text/plain", "Data received"); });
 
     Server.on("/endgame", HTTP_POST, [](AsyncWebServerRequest *request)
-    {
-        gameData.hasGameStarted = false; // Set the game end flag
-        Gamemode = "";
-        Player1Kills = 0;
-        Player1Deaths = 0;
-        Player1kd = 0.0;
+              {
+                  gameData.hasGameStarted = false; // Set the game end flag
+                  Gamemode = "";
+                  Player1Kills = 0;
+                  Player1Deaths = 0;
+                  Player1kd = 0.0;
 
-        Player2Kills = 0;
-        Player2Deaths = 0;
-        Player2kd = 0.0;
-        Serial.println("Game has ended");
-        request->send(200, "text/plain", "Game ended"); // Send confirmation response
-
-    });
+                  Player2Kills = 0;
+                  Player2Deaths = 0;
+                  Player2kd = 0.0;
+                  Serial.println("Game has ended");
+                  request->send(200, "text/plain", "Game ended"); // Send confirmation response
+              });
 
     // Start server
     Server.begin();
