@@ -276,24 +276,28 @@ void setVestColor()
 }
 
 unsigned long lastHitTime = 0;           // Time when the last hit was detected
-const unsigned long debounceDelay = 200; // Time in milliseconds to ignore other inputs
+const unsigned long debounceDelay = 500; // Increase debounce time to 500ms
 bool hitDetected = false;
+
 // Function to handle a detected hit
 void handleHit(int led_R, int led_B, int led_G)
 {
-    hitDetected = true;
-    lastHitTime = millis(); // Record the time of the hit
+    // Only process the hit if enough time has passed since the last hit
+    if (millis() - lastHitTime > debounceDelay)
+    {
+        lastHitTime = millis(); // Record the time of the hit
 
-    digitalWrite(led_R, HIGH);
-    digitalWrite(led_B, LOW);
-    digitalWrite(led_G, LOW);
+        // Flash LEDs for hit indication
+        digitalWrite(led_R, HIGH);
+        digitalWrite(led_B, LOW);
+        digitalWrite(led_G, LOW);
 
-    digitalWrite(haptic, HIGH);
-    delay(100); // Short haptic feedback duration
-    digitalWrite(haptic, LOW);
+        digitalWrite(haptic, HIGH); // Activate haptic feedback
+        delay(100);                 // Short haptic feedback duration
+        digitalWrite(haptic, LOW);
 
-    hitDetected = true;     // Mark a hit as detected
-    lastHitTime = millis(); // Record the time of the hit
+        // Register the hit once and avoid further processing
+    }
 }
 
 void highlightReceiver()
@@ -405,6 +409,7 @@ void Reciever::loop()
         setColor(HIGH, HIGH, HIGH); // Default LED color when the game hasn't started
         return;
     }
+
     Serial.println(receivedData.gameMode);
 
     // Check game mode
@@ -427,7 +432,7 @@ void Reciever::loop()
             updateHealthinfo();
         }
 
-        // Check for hits only in free-for-all
+        // Only check for hits if debounce delay has passed
         if (millis() - lastHitTime > debounceDelay)
         {
             hitDetected = false;
@@ -456,12 +461,14 @@ void Reciever::loop()
             else if (reciever3Value == 0)
             {
                 handleHit(led3_R, led3_B, led3_G);
-            }else if (reciever4Value == 0)
+            }
+            else if (reciever4Value == 0)
             {
                 handleHit(led4_R, led4_B, led4_G);
             }
         }
     }
+    // Same logic applies to targetpractice game mode
     else if (strcmp(receivedData.gameMode, "targetpractice") == 0)
     {
         if (millis() - lastHitTime > debounceDelay)
@@ -498,6 +505,7 @@ void Reciever::loop()
                 handleHit(led4_R, led4_B, led4_G);
             }
         }
+
         // Logic specific to target practice
         highlightReceiver(); // Only highlight receiver in target practice mode
     }
