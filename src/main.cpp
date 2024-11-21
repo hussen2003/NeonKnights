@@ -28,14 +28,14 @@ Reciever reciever;
 
 void setup() {
   //mainHub.setup();
-  //emitter.setup();
-  reciever.setup();
+  emitter.setup();
+  //reciever.setup();
 }
 
 void loop() {
   //mainHub.loop();
-  //emitter.loop();
-  reciever.loop();
+  emitter.loop();
+  //reciever.loop();
 }
 
 

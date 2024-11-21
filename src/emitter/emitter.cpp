@@ -7,13 +7,15 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-int id = 2;
+int id = 1;
 
 typedef struct input_data
 {
+    char gameMode[20];
     bool hasGameStarted;
     char color1[10];
     char color2[10]; // Color for Team 2
+    int receiverChoice;
     int health1;
     int originalHealth1;
     int health2;
@@ -27,6 +29,7 @@ esp_now_peer_info_t peerGunInfo;
 void OnGunDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
     memcpy(&RecievedData, incomingData, sizeof(RecievedData));
+    Serial.println("RECIEVED DATA FROM MAIN HUB");
     Serial.print("Bytes received: ");
     Serial.println(len);
     Serial.print("Game Started: ");
@@ -213,7 +216,7 @@ void deletehearts()
 {
     if (originalhealth == 0)
     {
-        Serial.println("Error: originalhealth is 0!");
+        //Serial.println("Error: originalhealth is 0!");
         return; // Prevent division by zero
     }
 
@@ -261,6 +264,7 @@ void Emitter::setup()
 
     resethearts();
     resetbullets();
+    SetColor(HIGH, HIGH, HIGH);
 }
 
 void updatehealthinfo()
@@ -274,7 +278,7 @@ void updatehealthinfo()
         }
         else
         {
-            Serial.println("Error: Received invalid originalHealth1");
+            //Serial.println("Error: Received invalid originalHealth1");
         }
     }
     else if (id == 2)
@@ -286,7 +290,7 @@ void updatehealthinfo()
         }
         else
         {
-            Serial.println("Error: Received invalid originalHealth2");
+            //Serial.println("Error: Received invalid originalHealth2");
         }
     }
     if (health == originalhealth && health != lastHealth)
@@ -301,6 +305,12 @@ const unsigned long debounceDelay = 200; // 200ms debounce time
 
 void Emitter::loop()
 {
+    Serial.printf("Color: %s \n", RecievedData.color2);
+    if (!RecievedData.hasGameStarted)
+    {
+        SetColor(HIGH, HIGH, HIGH); // Default LED color when the game hasn't started
+        return;
+    }
     setGunColor();
     updatehealthinfo();
 
@@ -318,6 +328,7 @@ void Emitter::loop()
     // Button press logic
     if ((digitalRead(trigger) == LOW) && (bullets != 0) && digitalRead(reload) == LOW)
     {
+        Serial.println("TRIGGER PRESSED");
         digitalWrite(haptic1, HIGH);
         digitalWrite(haptic2, HIGH);
 
@@ -328,6 +339,7 @@ void Emitter::loop()
         delay(100); // Send signal for 100ms
         ledcWrite(ledChannel, 0);
         delay(100);
+        Serial.println("EMITTER SHOT");
 
         digitalWrite(haptic1, LOW);
         digitalWrite(haptic2, LOW);

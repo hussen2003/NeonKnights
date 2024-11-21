@@ -17,9 +17,11 @@ uint8_t vestMacAddresses[4][6] = {
 
 typedef struct input_data
 {
+    char gameMode[20];
     bool hasGameStarted;
-    char color1[10]; // Color for Team 1
+    char color1[10];
     char color2[10]; // Color for Team 2
+    int receiverChoice;
     int health1;
     int originalHealth1;
     int health2;
@@ -56,6 +58,9 @@ struct_message boardsStruct[2] = {board1, board2};
 // callback function that will be executed when data is received
 void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
+    // Serial.println("RECIEVED DATA FROM VESTS");
+    // Serial.println();
+
     char macStr[18];
     // Serial.print("Packet received from: ");
     snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -73,6 +78,8 @@ void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len
         board1.reciever2Value = myData.reciever2Value;
         board1.reciever3Value = myData.reciever3Value;
         board1.reciever4Value = myData.reciever4Value;
+
+
     }
     else if (myData.id == 2)
     {
@@ -82,12 +89,21 @@ void OnDataRecvHub(const uint8_t *mac_addr, const uint8_t *incomingData, int len
         board2.reciever3Value = myData.reciever3Value;
         board2.reciever4Value = myData.reciever4Value;
     }
+    // Debugging: Print received values
+    // Serial.printf("Vest 1 Reciever 1: %d Vest 2 Reciever 1: %d\n", board1.reciever1Value, board2.reciever1Value);
+    // Serial.printf("Vest 1 Reciever 2: %d Vest 2 Reciever 2: %d\n", board1.reciever2Value, board2.reciever2Value);
+    // Serial.printf("Vest 1 Reciever 3: %d Vest 2 Reciever 3: %d\n", board1.reciever3Value, board2.reciever3Value);
+    // Serial.printf("Vest 1 Reciever 4: %d Vest 2 Reciever 4: %d\n", board1.reciever4Value, board2.reciever4Value);
+    // Serial.println();
 }
 
 // Callback function when data is sent
 void OnDataSentHub(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+
+    // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    // Serial.println("SENT DATA TO VEST AND GUNS");
+    // Serial.println();
 }
 
 // Replace with your network credentials
@@ -121,6 +137,13 @@ double Player1kd = 0.0;
 int Player2Kills = 0;
 int Player2Deaths = 0;
 double Player2kd = 0.0;
+
+int hitCounter = 0;                 // Tracks successful hits
+int missCounter = 0;                // Tracks misses
+double accuracy = 0.0;              // Tracks the accuracy percentage
+unsigned long timerStartMillis = 0; // Start time for 10-second timer
+int currentTarget = 0;              // Tracks which receiver (1, 2, or 3) is the current target
+bool isTargetHit = false;           // Tracks if the current target has been hit
 
 String getteamcolor(int team)
 {
@@ -240,7 +263,8 @@ String getHTML()
                     padding: 30px;
                     border-radius: 10px;
                     width: 100%;
-                    max-width: 3500px;
+                    width: fit-content; /* Automatically fits content width */
+                    margin: 0 auto;
                     box-sizing: border-box;
                     backdrop-filter: blur(10px); /* Applies blur to the background */
                     box-shadow: 0px 4px 20px rgba(255, 255, 255, 0.3); /* Optional shadow for depth */
@@ -301,7 +325,7 @@ String getHTML()
                 button {
                     font-size: 20px;
                     padding: 10px;
-                    margin: 0px;
+                    margin-top: 10px;
                     border-radius: 10px;
                 }
                 .hidden {
@@ -309,18 +333,15 @@ String getHTML()
                 }
                 .statbox{
                     display: flex;
-                    flex-direction: row;  /* Stack label and input/select side by side */
-                    align-items: flex-start; /* Left-align items */
-                    justify-content: flex-start; /* Align items to the left */
-                    width: 100%;
-                    margin-top: 15px;
-                    margin-bottom: 0px;
+                    flex-direction: row; /* Align columns in a row */
+                    justify-content: space-between; /* Space out columns evenly */
+                    gap: 10px; /* Add spacing between columns */
+                    margin-bottom: 10px; 
                 }
                 .stat {
-                    color: white;
-                    border-color: 30px, white;
-                    min-width: 100px;
-                    max-width: 100px;
+                    min-width: 80px; /* Adjust column width as needed */
+                    text-align: center;
+                    padding: 5px;
                 }
             </style>
             <script>
@@ -328,7 +349,7 @@ String getHTML()
 
                 socket.onmessage = function(event) {
                     let data = JSON.parse(event.data);
-                    
+
                     // Update team and player details
                     document.getElementById("t1n").textContent = data.t1n;
                     document.getElementById("p1n").textContent = data.p1n;
@@ -341,7 +362,15 @@ String getHTML()
                     document.getElementById("player2kills").textContent = data.player2kills;
                     document.getElementById("player2deaths").textContent = data.player2deaths;
                     document.getElementById("player2kd").textContent = data.player2kd; // Update K/D
+
+                    // Update target practice stats (if in target practice mode)
+                    if (data.gamemode === "targetpractice") {
+                        document.getElementById("hits").textContent = data.hits;
+                        document.getElementById("misses").textContent = data.misses;
+                        document.getElementById("accuracy").textContent = data.accuracy + "%";
+                    }
                 };
+
 
                 socket.onclose = function(event) {
                     console.log("WebSocket closed");
@@ -561,6 +590,25 @@ String getHTML()
             </div>
         </div>
     </div>
+    <div class="scoreboard">
+        <h2>Target Practice Stats</h2>
+        <div class="statbox">
+            <div class="stat">
+                Hits
+            </div>
+            <div class="stat">
+                Misses
+            </div>
+            <div class="stat">
+                Accuracy
+            </div>
+        </div>
+        <div class="statbox">
+            <div class="stat" id="hits">0</div>
+            <div class="stat" id="misses">0</div>
+            <div class="stat" id="accuracy">0</div>
+        </div>
+    </div>
     <button onclick="endgame()">End Game</button>
 </div>
 </body>
@@ -572,11 +620,12 @@ String getHTML()
 
 void UpdateWebpage()
 {
-    // Serial.println("UPDATE WEBPAGE!!!");
+    // Calculate K/D ratios
     float Player1KD = (Player1Deaths == 0) ? Player1Kills : (float)Player1Kills / Player1Deaths;
     float Player2KD = (Player2Deaths == 0) ? Player2Kills : (float)Player2Kills / Player2Deaths;
 
-    StaticJsonDocument<256> doc; // Adjust size as needed
+    // Create JSON document
+    StaticJsonDocument<512> doc; // Adjust size as needed
     doc["t1n"] = Team1Name;
     doc["p1n"] = Player1Name;
     doc["player1kills"] = Player1Kills;
@@ -589,11 +638,22 @@ void UpdateWebpage()
     doc["player2deaths"] = Player2Deaths;
     doc["player2kd"] = String(Player2KD, 2); // Send with 2 decimal places
 
+    // Send Target Practice stats if game mode is targetpractice
+    if (Gamemode == "targetpractice")
+    {
+        doc["gamemode"] = "targetpractice";
+        doc["hits"] = hitCounter;                                                                                      // The number of hits
+        doc["misses"] = missCounter;                                                                                   // The number of misses
+        doc["accuracy"] = (hitCounter + missCounter > 0)
+                              ? String(((float)hitCounter / (hitCounter + missCounter)) * 100, 2)
+                              : "0.00"; // Calculate accuracy and format to 2 decimal places
+    }
+
     String json;
     serializeJson(doc, json);
 
-    Serial.println(json);
-    ws.textAll(json); // Send to all WebSocket clients
+    // Send the data to all WebSocket clients
+    ws.textAll(json);
 }
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
@@ -728,7 +788,10 @@ void MainHub::setup()
     Server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request)
               {
         if (request->hasParam("gamemode", true)) 
+        {
             Gamemode = request->getParam("gamemode", true)->value();
+            strcpy(gameData.gameMode, Gamemode.c_str());
+        }
         if (request->hasParam("team1name", true)) 
             Team1Name = request->getParam("team1name", true)->value();
         if (request->hasParam("team1color", true)) 
@@ -766,13 +829,15 @@ void MainHub::setup()
             Player2Damage = request->getParam("player2damage", true)->value().toInt();  // Convert to int
 
     
-        Serial.println("Game setup confirmed:");
-        Serial.print("Gamemode: " + Gamemode);
-        Serial.print("Team 1 color: " + Team1Color);
-        Serial.print("Team 2 color: " + Team2Color);
-        Serial.println();
+        // Serial.println("Game setup confirmed:");
+        // Serial.print("Gamemode: " + Gamemode);
+        // Serial.print("Team 1 color: " + Team1Color);
+        // Serial.print("Team 2 color: " + Team2Color);
+        // Serial.println();
 
         // Send a response back to the client
+        gameData.hasGameStarted = true;
+        sendGameData();
         request->send(200, "text/plain", "Data received"); });
 
     Server.on("/endgame", HTTP_POST, [](AsyncWebServerRequest *request)
@@ -786,6 +851,18 @@ void MainHub::setup()
                   Player2Kills = 0;
                   Player2Deaths = 0;
                   Player2kd = 0.0;
+
+                  hitCounter = 0;
+                  missCounter = 0;
+                  accuracy = 0.0;
+                //   Serial.print("Gamemode: ");
+                //   Serial.println(Gamemode);
+                //   Serial.print("Player1Kills: ");
+                //   Serial.println(Player1Kills);
+                //   Serial.print("Player2Kills: ");
+                //   Serial.println(Player2Kills);
+                  UpdateWebpage();
+                  sendGameData();
                   Serial.println("Game has ended");
                   request->send(200, "text/plain", "Game ended"); // Send confirmation response
               });
@@ -795,38 +872,13 @@ void MainHub::setup()
     EspNowSetup();
 }
 
-// int hitCounter = 0;           // Tracks successful hits
-// int missCounter = 0;          // Tracks misses
-// double accuracy = 0.0;        // Tracks the accuracy percentage
-// unsigned long timerStart = 0; // Start time for 10-second timer
-// int currentTarget = 0;        // Tracks which receiver (1, 2, or 3) is the current target
-// bool isTargetHit = false;     // Tracks if the current target has been hit
-void updateKD()
-{
-    if (Player1Deaths != 0)
-    {
-        Player1kd = Player1Kills / Player1Deaths;
-    }
-    else
-    {
-        Player1kd = Player1Kills;
-    }
-
-    if (Player2Deaths != 0)
-    {
-        Player2kd = Player2Kills / Player2Deaths;
-    }
-    else
-    {
-        Player2kd = Player2Kills;
-    }
-}
 
 void MainHub::loop()
 {
     // EspNowLoop(); // Handles sending and receiving via ESP-NOW
     if (Gamemode == "freeforall")
     {
+        UpdateWebpage();
         sendGameData(); // Send game data to vests
         gameData.hasGameStarted = true;
 
@@ -850,14 +902,11 @@ void MainHub::loop()
             Player1Health = 0; // Make sure health doesn't go negative
             Player2Kills++;    // Player 2 gets a kill
             Player1Deaths++;   // Player 1 has died
-            // sendColorToVest(1, "white"); // Player 1 is dead, update Player 1's vest color to white
             sendGameData();
             UpdateWebpage();
             delay(5000); // Wait for 5 seconds before respawning Player 1
-            // updateKD();
             //  Respawn Player 1 by resetting their health
             Player1Health = Player1InitialHealth; // Restore original health for Player 1
-            // sendColorToVest(1, "green");          // Change Player 1's vest color back to green
         }
 
         // Check if Player 2 has died
@@ -879,71 +928,77 @@ void MainHub::loop()
         // Update the webpage with the latest stats
 
         // Debugging: Print received values
-        Serial.printf("Vest 1 Reciever 1: %d Vest 2 Reciever 1: %d\n", board1.reciever1Value, board2.reciever1Value);
-        Serial.printf("Vest 1 Reciever 2: %d Vest 2 Reciever 2: %d\n", board1.reciever2Value, board2.reciever2Value);
-        Serial.printf("Vest 1 Reciever 3: %d Vest 2 Reciever 3: %d\n", board1.reciever3Value, board2.reciever3Value);
-        Serial.printf("Vest 1 Reciever 4: %d Vest 2 Reciever 4: %d\n", board1.reciever4Value, board2.reciever4Value);
+        // Serial.printf("Vest 1 Reciever 1: %d Vest 2 Reciever 1: %d\n", board1.reciever1Value, board2.reciever1Value);
+        // Serial.printf("Vest 1 Reciever 2: %d Vest 2 Reciever 2: %d\n", board1.reciever2Value, board2.reciever2Value);
+        // Serial.printf("Vest 1 Reciever 3: %d Vest 2 Reciever 3: %d\n", board1.reciever3Value, board2.reciever3Value);
+        // Serial.printf("Vest 1 Reciever 4: %d Vest 2 Reciever 4: %d\n", board1.reciever4Value, board2.reciever4Value);
 
-        Serial.println();
-        // Debugging output
+        // Serial.println();
+        // // Debugging output
 
-        Serial.println("Player 1 Health: " + String(Player1Health));
-        Serial.println("Player 2 Health: " + String(Player2Health));
-        Serial.println("Player 1 Kills: " + String(Player1Kills));
-        Serial.println("Player 1 Deaths: " + String(Player1Deaths));
-        Serial.println("Player 2 Kills: " + String(Player2Kills));
-        Serial.println("Player 2 Deaths: " + String(Player2Deaths));
+        // Serial.println("Player 1 Health: " + String(Player1Health));
+        // Serial.println("Player 2 Health: " + String(Player2Health));
+        // Serial.println("Player 1 Kills: " + String(Player1Kills));
+        // Serial.println("Player 1 Deaths: " + String(Player1Deaths));
+        // Serial.println("Player 2 Kills: " + String(Player2Kills));
+        // Serial.println("Player 2 Deaths: " + String(Player2Deaths));
     }
 
-    // if (Gamemode == "targetpractice")
-    // {
+    // Target Practice Game Mode
+    if (Gamemode == "targetpractice")
+    {
+        // Serial.printf("Vest 1 Reciever 1: %d \n", board1.reciever1Value);
+        // Serial.printf("Vest 1 Reciever 2: %d \n", board1.reciever2Value);
+        // Serial.printf("Vest 1 Reciever 3: %d \n", board1.reciever3Value);
+        // Serial.printf("Vest 1 Reciever 4: %d \n", board1.reciever4Value);
+        // Serial.println();
+        UpdateWebpage();
+        gameData.hasGameStarted = true;
+        sendGameData();
+        // If no target is active or the current target was hit, select a new one
+        if (currentTarget == 0 || isTargetHit)
+        {
+            currentTarget = random(1, 4);            // Randomly select receiver 1, 2, or 3
+            gameData.receiverChoice = currentTarget; // Update gameData with the selected target
+            sendGameData();                        // Send data to the vest
+            Serial.println("New target sent to vest: Receiver " + String(currentTarget));
+            isTargetHit = false; // Reset target hit flag
+        }
 
-    //     // If a target has not been selected, randomly choose a target (1, 2, or 3)
-    //     if (currentTarget == 0 || isTargetHit)
-    //     {
-    //         currentTarget = random(1, 4); // Randomly select 1, 2, or 3
-    //         Serial.println("New target: Receiver " + String(currentTarget));
-    //         isTargetHit = false;   // Reset the target hit flag
-    //         timerStart = millis(); // Reset the timer for the new target
-    //     }
+        // Check if the randomly selected receiver was hit
+        if ((currentTarget == 1 && board1.reciever1Value == 0) ||
+            (currentTarget == 2 && board1.reciever2Value == 0) ||
+            (currentTarget == 3 && board1.reciever3Value == 0))
+        {
+            hitCounter++;       // Increment hit count
+            UpdateWebpage();
+            isTargetHit = true; // Mark the target as hit
+            Serial.println("Target hit! Moving to the next target...");
+            delay(3000); // Cooldown before selecting a new target
+        }
+        else if ((board1.reciever1Value == 0 && currentTarget != 1) ||
+                 (board1.reciever2Value == 0 && currentTarget != 2) ||
+                 (board1.reciever3Value == 0 && currentTarget != 3))
+        {
+            // If a non-target zone is hit, it's a miss
+            missCounter++;
+            UpdateWebpage();
+            Serial.println("Miss! Vest will flash red...");
+            gameData.receiverChoice = 0; // Reset target indicator on the vest
+            sendGameData();            // Send data to the vest
+            delay(3000);                 // Cooldown before retrying
+            currentTarget = 0;           // Reset current target
+        }
 
-    //     // Check if the randomly selected receiver was hit
-    //     if ((currentTarget == 1 && board1.reciever1Value == 0) ||
-    //         (currentTarget == 2 && board1.reciever2Value == 0) ||
-    //         (currentTarget == 3 && board1.reciever3Value == 0))
-    //     {
-    //         hitCounter++; // Target was hit
-    //         Serial.println("Target hit!");
-    //         isTargetHit = true; // Mark the target as hit
-    //     }
+        // Update accuracy
+        if (hitCounter + missCounter > 0)
+        {
+            accuracy = ((double)hitCounter / (hitCounter + missCounter)) * 100;
+        }
 
-    //     // Check if the timer has exceeded 10 seconds or another receiver was hit
-    //     if (millis() - timerStart >= 10000 ||
-    //         (board1.reciever1Value == 0 && currentTarget != 1) ||
-    //         (board1.reciever2Value == 0 && currentTarget != 2) ||
-    //         (board1.reciever3Value == 0 && currentTarget != 3))
-    //     {
+        // Debugging: Print stats
+        Serial.println("Hits: " + String(hitCounter) + " | Misses: " + String(missCounter) + " | Accuracy: " + String(accuracy, 2) + "%");
 
-    //         if (!isTargetHit)
-    //         { // If the target was not hit in time or another receiver was hit
-    //             missCounter++;
-    //             Serial.println("Target missed!");
-    //         }
-
-    //         // After 10 seconds or a miss, reset and pick a new target
-    //         currentTarget = 0; // Reset target to select a new one
-    //     }
-
-    //     // Calculate accuracy
-    //     if (hitCounter + missCounter > 0)
-    //     {
-    //         accuracy = ((double)hitCounter / (hitCounter + missCounter)) * 100;
-    //     }
-
-    //     // Display stats for debugging
-    //     Serial.println("Hits: " + String(hitCounter) + " | Misses: " + String(missCounter) + " | Accuracy: " + String(accuracy, 2) + "%");
-
-    //     // Optional: Update webpage with hit/miss stats and accuracy
-    //     UpdateWebpage();
-    // }
+        // Update webpage to reflect new stats
+    }
 }

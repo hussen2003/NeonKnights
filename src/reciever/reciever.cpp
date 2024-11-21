@@ -12,7 +12,7 @@ uint8_t broadcastAddress[] = {0xfc, 0xB4, 0x67, 0x72, 0x7c, 0x94};
 // Structure to send data (same as before)
 typedef struct struct_message
 {
-    int id = 1; // must be unique for each sender board
+    int id = 2; // must be unique for each sender board
     int reciever1Value;
     int reciever2Value;
     int reciever3Value;
@@ -22,9 +22,11 @@ typedef struct struct_message
 // Structure to receive game-related data
 typedef struct input_data
 {
+    char gameMode[20];
     bool hasGameStarted;
     char color1[10];
     char color2[10]; // Color for Team 2
+    int receiverChoice;
     int health1;
     int originalHealth1;
     int health2;
@@ -41,8 +43,11 @@ esp_now_peer_info_t peerInfo;
 // callback when data is sent
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-    Serial.print("\r\nLast Packet Send Status:\t");
-    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    //Serial.print("\r\nLast Packet Send Status:\t");
+    // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    // Serial.println("SENDING DATA TO MAIN HUB");
+                            
+    // Serial.println();
 }
 // callback when data is received
 
@@ -51,22 +56,24 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
     memcpy(&receivedData, incomingData, sizeof(receivedData));
-    Serial.print("Bytes received: ");
-    Serial.println(len);
+    // Serial.println("RECIEVED DATA FROM MAIN HUB");
+    // Serial.println();
+    // Serial.print("Bytes received: ");
+    // Serial.println(len);
     Serial.print("Game Started: ");
     Serial.println(receivedData.hasGameStarted ? "Yes" : "No");
-    Serial.print("Color 1: ");
-    Serial.println(receivedData.color1);
-    Serial.print("Color 2: ");
-    Serial.println(receivedData.color2);
-    Serial.print("Health1: ");
-    Serial.println(receivedData.health1);
-    Serial.print("OriginalHealth1: ");
-    Serial.println(receivedData.originalHealth1);
-    Serial.print("Health2: ");
-    Serial.println(receivedData.health2);
-    Serial.print("OriginalHealth2: ");
-    Serial.println(receivedData.originalHealth2);
+    // Serial.print("Color 1: ");
+    // Serial.println(receivedData.color1);
+    // Serial.print("Color 2: ");
+    // Serial.println(receivedData.color2);
+    // Serial.print("Health1: ");
+    // Serial.println(receivedData.health1);
+    // Serial.print("OriginalHealth1: ");
+    // Serial.println(receivedData.originalHealth1);
+    // Serial.print("Health2: ");
+    // Serial.println(receivedData.health2);
+    // Serial.print("OriginalHealth2: ");
+    // Serial.println(receivedData.originalHealth2);
 }
 
 void espNowSetup()
@@ -105,7 +112,7 @@ void espNowSetup()
 
 void espNowLoop()
 {
-    Serial.printf("Data ID sent: %d\n", myData.id);
+    //Serial.printf("Data ID sent: %d\n", myData.id);
 
 
 
@@ -114,11 +121,11 @@ void espNowLoop()
 
     if (result == ESP_OK)
     {
-        Serial.println("Sent with success");
+        // Serial.println("Sent with success");
     }
     else
     {
-        Serial.println("Error sending the data");
+        // Serial.println("Error sending the data");
     }
     delay(100);
 }
@@ -267,6 +274,85 @@ void setVestColor()
         }
     }
 }
+
+unsigned long lastHitTime = 0;           // Time when the last hit was detected
+const unsigned long debounceDelay = 200; // Time in milliseconds to ignore other inputs
+bool hitDetected = false;
+// Function to handle a detected hit
+void handleHit(int led_R, int led_B, int led_G)
+{
+    hitDetected = true;
+    lastHitTime = millis(); // Record the time of the hit
+
+    digitalWrite(led_R, HIGH);
+    digitalWrite(led_B, LOW);
+    digitalWrite(led_G, LOW);
+
+    digitalWrite(haptic, HIGH);
+    delay(100); // Short haptic feedback duration
+    digitalWrite(haptic, LOW);
+
+    hitDetected = true;     // Mark a hit as detected
+    lastHitTime = millis(); // Record the time of the hit
+}
+
+void highlightReceiver()
+{
+    // Reset all receivers to white initially
+    setColor(HIGH, HIGH, HIGH);
+
+    // Check if the correct receiver is hit
+    if ((receivedData.receiverChoice == 1 && digitalRead(reciever1) == 0) ||
+        (receivedData.receiverChoice == 2 && digitalRead(reciever2) == 0) ||
+        (receivedData.receiverChoice == 3 && digitalRead(reciever3) == 0) ||
+        (receivedData.receiverChoice == 4 && digitalRead(reciever4) == 0))
+    {
+        // Correct zone hit: Flash all LEDs green for a noticeable time
+        setColor(LOW, HIGH, LOW);   // Green
+        delay(200);                 // Keep the green flash visible
+        setColor(HIGH, HIGH, HIGH); // Reset to white
+    }
+    else if (digitalRead(reciever1) == 0 || digitalRead(reciever2) == 0 ||
+             digitalRead(reciever3) == 0 || digitalRead(reciever4) == 0)
+    {
+        // Wrong zone hit: Flash all LEDs red for a noticeable time
+        setColor(HIGH, LOW, LOW);   // Red
+        delay(200);                 // Keep the red flash visible
+        setColor(HIGH, HIGH, HIGH); // Reset to white
+    }
+    else
+    {
+        // Highlight the specified receiver (no hit detected)
+        switch (receivedData.receiverChoice)
+        {
+        case 1:
+            digitalWrite(led1_R, LOW);
+            digitalWrite(led1_G, HIGH);
+            digitalWrite(led1_B, LOW); // Receiver 1: Green
+            break;
+        case 2:
+            digitalWrite(led2_R, LOW);
+            digitalWrite(led2_G, HIGH);
+            digitalWrite(led2_B, LOW); // Receiver 2: Green
+            break;
+        case 3:
+            digitalWrite(led3_R, LOW);
+            digitalWrite(led3_G, HIGH);
+            digitalWrite(led3_B, LOW); // Receiver 3: Green
+            break;
+        case 4:
+            digitalWrite(led4_R, LOW);
+            digitalWrite(led4_G, HIGH);
+            digitalWrite(led4_B, LOW); // Receiver 4: Green
+            break;
+        default:
+            // No specific receiver highlighted
+            setColor(HIGH, HIGH, HIGH);
+            break;
+        }
+    }
+}
+
 int Originalhealth = 100;
 int Health = 100;
 int LastHealth = -1; // Initialize to an impossible value
@@ -282,7 +368,7 @@ void updateHealthinfo()
         }
         else
         {
-            Serial.println("Error: Received invalid originalHealth1");
+            //Serial.println("Error: Received invalid originalHealth1");
         }
     }
     else if (myData.id == 2)
@@ -293,7 +379,7 @@ void updateHealthinfo()
         }
         else
         {
-            Serial.println("Error: Received invalid originalHealth2");
+            //Serial.println("Error: Received invalid originalHealth2");
         }
     }
     if (Health == Originalhealth && Health != LastHealth)
@@ -307,79 +393,117 @@ void Reciever::setup()
     Serial.begin(115200);
     setupRecieversAndLed();
     espNowSetup();
+    setColor(HIGH,HIGH, HIGH);
 }
-
 
 void Reciever::loop()
 {
-
-    setVestColor();
-
     espNowLoop();
-    updateHealthinfo();
 
-    // Only update the display when health changes
-    if (Health != LastHealth)
+    if (!receivedData.hasGameStarted)
     {
-        LastHealth = Health; // Update the last health value
+        setColor(HIGH, HIGH, HIGH); // Default LED color when the game hasn't started
+        return;
     }
-    while (Health == 0)
+    Serial.println(receivedData.gameMode);
+
+    // Check game mode
+    if (strcmp(receivedData.gameMode, "freeforall") == 0)
     {
-        Serial.println("DEATH!!!!");
-        setColor(HIGH, LOW, LOW);
+        // Logic specific to free-for-all
+        setVestColor();
         updateHealthinfo();
+
+        // Handle health changes
+        if (Health != LastHealth)
+        {
+            LastHealth = Health;
+        }
+
+        // Handle zero health
+        while (Health == 0)
+        {
+            setColor(HIGH, LOW, LOW); // Indicate dead state (red LEDs)
+            updateHealthinfo();
+        }
+
+        // Check for hits only in free-for-all
+        if (millis() - lastHitTime > debounceDelay)
+        {
+            hitDetected = false;
+        }
+
+        if (!hitDetected)
+        {
+            int reciever1Value = digitalRead(reciever1);
+            int reciever2Value = digitalRead(reciever2);
+            int reciever3Value = digitalRead(reciever3);
+            int reciever4Value = digitalRead(reciever4);
+
+            myData.reciever1Value = reciever1Value;
+            myData.reciever2Value = reciever2Value;
+            myData.reciever3Value = reciever3Value;
+            myData.reciever4Value = reciever4Value;
+
+            if (reciever1Value == 0)
+            {
+                handleHit(led1_R, led1_B, led1_G);
+            }
+            else if (reciever2Value == 0)
+            {
+                handleHit(led2_R, led2_B, led2_G);
+            }
+            else if (reciever3Value == 0)
+            {
+                handleHit(led3_R, led3_B, led3_G);
+            }else if (reciever4Value == 0)
+            {
+                handleHit(led4_R, led4_B, led4_G);
+            }
+        }
     }
-
-    int reciever1Value = digitalRead(reciever1);
-    int reciever2Value = digitalRead(reciever2);
-    int reciever3Value = digitalRead(reciever3);
-    int reciever4Value = digitalRead(reciever4);
-
-    myData.reciever1Value = reciever1Value;
-    myData.reciever2Value = reciever2Value;
-    myData.reciever3Value = reciever3Value;
-    myData.reciever4Value = reciever4Value;
-
-    if (reciever1Value == 0)
+    else if (strcmp(receivedData.gameMode, "targetpractice") == 0)
     {
-        digitalWrite(led1_R, HIGH);
-        digitalWrite(led1_B, LOW);
-        digitalWrite(led1_G, LOW);
+        if (millis() - lastHitTime > debounceDelay)
+        {
+            hitDetected = false;
+        }
 
-        digitalWrite(haptic, HIGH);
+        if (!hitDetected)
+        {
+            int reciever1Value = digitalRead(reciever1);
+            int reciever2Value = digitalRead(reciever2);
+            int reciever3Value = digitalRead(reciever3);
+            int reciever4Value = digitalRead(reciever4);
 
-        delay(100);    }
-    if (reciever2Value == 0)
-    {
-        digitalWrite(led2_R, HIGH);
-        digitalWrite(led2_B, LOW);
-        digitalWrite(led2_G, LOW);
+            myData.reciever1Value = reciever1Value;
+            myData.reciever2Value = reciever2Value;
+            myData.reciever3Value = reciever3Value;
+            myData.reciever4Value = reciever4Value;
 
-        digitalWrite(haptic, HIGH);
-
-        delay(100);
+            if (reciever1Value == 0)
+            {
+                handleHit(led1_R, led1_B, led1_G);
+            }
+            else if (reciever2Value == 0)
+            {
+                handleHit(led2_R, led2_B, led2_G);
+            }
+            else if (reciever3Value == 0)
+            {
+                handleHit(led3_R, led3_B, led3_G);
+            }
+            else if (reciever4Value == 0)
+            {
+                handleHit(led4_R, led4_B, led4_G);
+            }
+        }
+        // Logic specific to target practice
+        highlightReceiver(); // Only highlight receiver in target practice mode
     }
-    if (reciever3Value == 0)
+    else
     {
-        digitalWrite(led3_R, HIGH);
-        digitalWrite(led3_B, LOW);
-        digitalWrite(led3_G, LOW);
-
-        digitalWrite(haptic, HIGH);
-
-        delay(100);
-
+        // Default behavior for undefined or new modes
+        setColor(HIGH, HIGH, HIGH); // Default to white LEDs
     }
-    if (reciever4Value == 0)
-    {
-        digitalWrite(led4_R, HIGH);
-        digitalWrite(led4_B, LOW);
-        digitalWrite(led4_G, LOW);
-
-        digitalWrite(haptic, HIGH);
-
-        delay(100);
-
-    }
-    digitalWrite(haptic, LOW);
 }
