@@ -145,478 +145,462 @@ unsigned long timerStartMillis = 0; // Start time for 10-second timer
 int currentTarget = 0;              // Tracks which receiver (1, 2, or 3) is the current target
 bool isTargetHit = false;           // Tracks if the current target has been hit
 
-String getteamcolor(int team)
-{
-    int red = 0;
-    int green = 0;
-    int blue = 0;
-
-    if (team == 1)
-    {
-        // Set colors
-        if (Team1Color == "blue")
-        {
-            int blue = 255;
-        }
-        else if (Team1Color == "green")
-        {
-            int green = 255;
-        }
-        else if (Team1Color == "yellow")
-        {
-            int red = 255;
-            int green = 255;
-        }
-        else if (Team1Color == "purple")
-        {
-            int red = 255;
-            int blue = 255;
-        }
-        else if (Team1Color == "cyan")
-        {
-            int green = 255;
-            int blue = 255;
-        }
-    }
-    else if (team == 2)
-    {
-        // Set colors
-        if (Team2Color == "blue")
-        {
-            int blue = 255;
-        }
-        else if (Team2Color == "green")
-        {
-            int green = 255;
-        }
-        else if (Team2Color == "yellow")
-        {
-            int red = 255;
-            int green = 255;
-        }
-        else if (Team2Color == "purple")
-        {
-            int red = 255;
-            int blue = 255;
-        }
-        else if (Team2Color == "cyan")
-        {
-            int green = 255;
-            int blue = 255;
-        }
-    }
-    return "rgba(" + String(red) + ", " + String(green) + ", " + String(blue) + ", 0.6)";
-}
-
 // Function to return HTML content
 String getHTML()
 {
     String html = R"rawliteral(
         <!DOCTYPE html>
         <html>
-        <head>
-            <title>Neon Knights Game Setup</title>
-            <style>
-                html, body {
-                    height: 100%;
-                    margin: 0;
-                    padding: 0;
-                    font-family: Arial, sans-serif;
-                    text-align: center;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                }
-                body {
-                    background-image: url('Laser.jpg'); /* Replace with the path to your image */
-                    background-size: cover;
-                    background-position: center;
-                    background-repeat: no-repeat;
-                }
-                h1 {
-                    font-size: 50px;
-                    height: 100%;
-                    margin-top: 0;
-                    margin-bottom: 20px;
-                    font-family: Arial, sans-serif;
-                    text-align: center;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                }
-                .gamesetup {
-                    background-color: rgba(0, 0, 0, 0.6); /* Translucent black */
-                    padding: 30px;
-                    border-radius: 10px;
-                    width: 100%;
-                    max-width: 3500px;
-                    box-sizing: border-box;
-                    backdrop-filter: blur(10px); /* Applies blur to the background */
-                    box-shadow: 0px 4px 20px rgba(255, 255, 255, 0.3); /* Optional shadow for depth */
-                    color: white;
-                }
-                .scoreboard {
-                
-                    background-color: rgba(0, 0, 0, 0.6); /* Translucent black */
-                    padding: 30px;
-                    border-radius: 10px;
-                    width: 100%;
-                    width: fit-content; /* Automatically fits content width */
-                    margin: 0 auto;
-                    box-sizing: border-box;
-                    backdrop-filter: blur(10px); /* Applies blur to the background */
-                    box-shadow: 0px 4px 20px rgba(255, 255, 255, 0.3); /* Optional shadow for depth */
-                    color: white;
-                }
-                h2 {
-                    margin: 0;
-                    font-size: 30px;
-                    font-family: Arial, sans-serif;
-                    text-align: center;
-                    display: flex;
-                    color: white;
-                }
-                .teambox {
-                    padding: 20px;
-                    max-width: 1000px;
-                    box-sizing: border-box;
-                    display: flex;
-                    flex-direction: row;  /* Keep elements in a row */
-                    justify-content: space-evenly;  /* Center-align the teams containers */
-                    align-items: center;
-                    width: 100%;
-                    gap: 50px;  /* Add gap between the teams containers */
-                }
-                .team1{
-                    background-color: )rawliteral" +
-                  getteamcolor(1) + R"rawliteral(;
-                    padding: 20px; 
-                    border-radius: 10px;
-                    width: 100%;
-                    backdrop-filter: blur(10px); /* Applies blur to the background */
-                    color: white;
-                    display: flex;           /* Make it a flex container */
-                    flex-direction: column;  /* Arrange children vertically */
-                    align-items: center;     /* Center align items horizontally */
-                }
-                .team2{
-                    background-color: )rawliteral" +
-                  getteamcolor(2) + R"rawliteral(;
-                    padding: 20px; 
-                    border-radius: 10px;
-                    width: 100%;
-                    backdrop-filter: blur(10px); /* Applies blur to the background */
-                    color: white;
-                    display: flex;           /* Make it a flex container */
-                    flex-direction: column;  /* Arrange children vertically */
-                    align-items: center;     /* Center align items horizontally */
-                }
-                .teamitem{
-                    display: flex;
-                    flex-direction: row;  /* Stack label and input/select side by side */
-                    align-items: flex-start; /* Left-align items */
-                    justify-content: flex-start; /* Align items to the left */
-                    width: 100%;
-                    margin-top: 15px;
-                    margin-bottom: 0px;
-                }
-                button {
-                    font-size: 20px;
-                    padding: 10px;
-                    margin-top: 10px;
-                    border-radius: 10px;
-                }
-                .hidden {
-                    display: none;
-                }
-                .statbox{
-                    display: flex;
-                    flex-direction: row; /* Align columns in a row */
-                    justify-content: space-between; /* Space out columns evenly */
-                    gap: 10px; /* Add spacing between columns */
-                    margin-bottom: 10px; 
-                }
-                .stat {
-                    min-width: 80px; /* Adjust column width as needed */
-                    text-align: center;
-                    padding: 5px;
-                }
-            </style>
-            <script>
-                let socket = new WebSocket("ws://" + window.location.hostname + "/ws");
-
-                socket.onmessage = function(event) {
-                    let data = JSON.parse(event.data);
-
-                    // Update team and player details
-                    document.getElementById("t1n").textContent = data.t1n;
-                    document.getElementById("p1n").textContent = data.p1n;
-                    document.getElementById("player1kills").textContent = data.player1kills;
-                    document.getElementById("player1deaths").textContent = data.player1deaths;
-                    document.getElementById("player1kd").textContent = data.player1kd; // Update K/D
-
-                    document.getElementById("t2n").textContent = data.t2n;
-                    document.getElementById("p2n").textContent = data.p2n;
-                    document.getElementById("player2kills").textContent = data.player2kills;
-                    document.getElementById("player2deaths").textContent = data.player2deaths;
-                    document.getElementById("player2kd").textContent = data.player2kd; // Update K/D
-
-                    // Update target practice stats (if in target practice mode)
-                    if (data.gamemode === "targetpractice") {
-                        document.getElementById("hits").textContent = data.hits;
-                        document.getElementById("misses").textContent = data.misses;
-                        document.getElementById("accuracy").textContent = data.accuracy + "%";
+            <head>
+                <title>Neon Knights Game Setup</title>
+                <style>
+                    html, body {
+                        height: 100%;
+                        margin: 0;
+                        padding: 0;
+                        font-family: Arial, sans-serif;
+                        text-align: center;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
                     }
-                };
+                    body {
+                        background-image: url('Laser.jpg'); /* Replace with the path to your image */
+                        background-size: cover;
+                        background-position: center;
+                        background-repeat: no-repeat;
+                    }
+                    h1 {
+                        font-size: 50px;
+                        height: 100%;
+                        margin-top: 0;
+                        margin-bottom: 20px;
+                        font-family: Arial, sans-serif;
+                        text-align: center;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                    }
+                    .gamesetup {
+                        background-color: rgba(0, 0, 0, 0.6); /* Translucent black */
+                        padding: 30px;
+                        border-radius: 10px;
+                        width: 100%;
+                        max-width: 3500px;
+                        box-sizing: border-box;
+                        backdrop-filter: blur(10px); /* Applies blur to the background */
+                        box-shadow: 0px 4px 20px rgba(255, 255, 255, 0.3); /* Optional shadow for depth */
+                        color: white;
+                    }
+                    .scoreboard {
+                    
+                        background-color: rgba(0, 0, 0, 0.8); /* Translucent black */
+                        padding: 30px;
+                        border-radius: 10px;
+                        width: 100%;
+                        width: fit-content; /* Automatically fits content width */
+                        margin: 0 auto;
+                        box-sizing: border-box;
+                        backdrop-filter: blur(10px); /* Applies blur to the background */
+                        box-shadow: 0px 4px 20px rgba(255, 255, 255, 0.3); /* Optional shadow for depth */
+                        color: white;
+                    }
+                    h2 {
+                        margin: 0;
+                        font-size: 30px;
+                        font-family: Arial, sans-serif;
+                        text-align: center;
+                        display: flex;
+                        color: white;
+                    }
+                    .teambox {
+                        padding: 20px;
+                        max-width: 1000px;
+                        box-sizing: border-box;
+                        display: flex;
+                        flex-direction: row;  /* Keep elements in a row */
+                        justify-content: space-evenly;  /* Center-align the teams containers */
+                        align-items: center;
+                        width: 100%;
+                        gap: 50px;  /* Add gap between the teams containers */
+                    }
+                    .freeforallbox {
+                        padding: 20px;
+                        max-width: 1000px;
+                        box-sizing: border-box;
+                        display: flex;
+                        flex-direction: row;  /* Keep elements in a row */
+                        justify-content: space-evenly;  /* Center-align the teams containers */
+                        align-items: center;
+                        width: 100%;
+                        gap: 50px;  /* Add gap between the teams containers */
+                    }
+                    .targetpracticebox {
+                        padding: 20px;
+                        max-width: 1000px;
+                        border-radius: 10px;
+                        backdrop-filter: blur(10px);
+                        color: white;
+                        box-sizing: border-box;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-evenly;  /* Center-align the teams containers */
+                        align-items: center;
+                        width: 100%;
+                        gap: 10px;  /* Add gap between the teams containers */
+                    }
+                    .team{
+                        padding: 20px; 
+                        border-radius: 10px;
+                        width: 100%;
+                        backdrop-filter: blur(10px); /* Applies blur to the background */
+                        color: white;
+                        display: flex;           /* Make it a flex container */
+                        flex-direction: column;  /* Arrange children vertically */
+                        align-items: center;     /* Center align items horizontally */
+                    }
+                    .team1{
+                        padding: 20px; 
+                        border-radius: 10px;
+                        width: 100%;
+                        backdrop-filter: blur(10px); /* Applies blur to the background */
+                        color: white;
+                        display: flex;           /* Make it a flex container */
+                        flex-direction: column;  /* Arrange children vertically */
+                        align-items: center;     /* Center align items horizontally */
+                    }
+                    .team2{
+                        padding: 20px; 
+                        border-radius: 10px;
+                        width: 100%;
+                        backdrop-filter: blur(10px); /* Applies blur to the background */
+                        color: white;
+                        display: flex;           /* Make it a flex container */
+                        flex-direction: column;  /* Arrange children vertically */
+                        align-items: center;     /* Center align items horizontally */
+                    }
+                    .teamitem{
+                        display: flex;
+                        flex-direction: row;  /* Stack label and input/select side by side */
+                        align-items: flex-start; /* Left-align items */
+                        justify-content: flex-start; /* Align items to the left */
+                        width: 100%;
+                        margin-top: 15px;
+                        margin-bottom: 0px;
+                    }
+                    button {
+                        font-size: 20px;
+                        padding: 10px;
+                        margin-top: 10px;
+                        border-radius: 10px;
+                    }
+                    .hidden {
+                        display: none;
+                    }
+                    .statbox{
+                        display: flex;
+                        flex-direction: row; /* Align columns in a row */
+                        justify-content: space-between; /* Space out columns evenly */
+                        gap: 10px; /* Add spacing between columns */
+                        margin-bottom: 10px; 
+                    }
+                    .stat {
+                        min-width: 80px; /* Adjust column width as needed */
+                        text-align: center;
+                        padding: 5px;
+                    }
+                </style>
+                <script>
+                    let socket = new WebSocket("ws://" + window.location.hostname + "/ws");
+
+                    socket.onmessage = function(event) {
+                        let data = JSON.parse(event.data);
+
+                        // Update team and player details
+                        document.getElementById("t1n").textContent = data.t1n;
+                        document.getElementById("p1n").textContent = data.p1n;
+                        document.getElementById("player1kills").textContent = data.player1kills;
+                        document.getElementById("player1deaths").textContent = data.player1deaths;
+                        document.getElementById("player1kd").textContent = data.player1kd; // Update K/D
+
+                        document.getElementById("t2n").textContent = data.t2n;
+                        document.getElementById("p2n").textContent = data.p2n;
+                        document.getElementById("player2kills").textContent = data.player2kills;
+                        document.getElementById("player2deaths").textContent = data.player2deaths;
+                        document.getElementById("player2kd").textContent = data.player2kd; // Update K/D
+
+                        // Update target practice stats (if in target practice mode)
+                        if (data.gamemode === "targetpractice") {
+                            document.getElementById("hits").textContent = data.hits;
+                            document.getElementById("misses").textContent = data.misses;
+                            document.getElementById("accuracy").textContent = data.accuracy + "%";
+                        }
+                    };
 
 
-                socket.onclose = function(event) {
-                    console.log("WebSocket closed");
-                };
-                
-                window.onload = function() {
-                    document.querySelector('.scoreboard').classList.add('hidden');
-                };
+                    socket.onclose = function(event) {
+                        console.log("WebSocket closed");
+                    };
+                    
+                    window.onload = function() {
+                        document.querySelector('.scoreboard').classList.add('hidden');
+                        document.querySelector('.freeforallbox').classList.add('hidden');
+                        document.querySelector('.targetpracticebox').classList.add('hidden');
+                    };
 
-                function confirmgame() {
-                    document.querySelector('.gamesetup').classList.add('hidden');
-                    document.querySelector('.scoreboard').classList.remove('hidden');
+                    function confirmgame()
+                    {
+                        const team1Color = document.getElementById("team1color").value;
+                        const team2Color = document.getElementById("team2color").value;
 
-                    const formData = new FormData();
-                    formData.append("gamemode", document.getElementById("gamemode").value);
-                    formData.append("team1name", document.getElementById("team1name").value);
-                    formData.append("team1color", document.getElementById("team1color").value);
-                    formData.append("player1name", document.getElementById("player1name").value);
-                    formData.append("player1health", document.getElementById("player1health").value);
-                    formData.append("player1damage", document.getElementById("player1damage").value);
-                    formData.append("team2name", document.getElementById("team2name").value);
-                    formData.append("team2color", document.getElementById("team2color").value);
-                    formData.append("player2name", document.getElementById("player2name").value);
-                    formData.append("player2health", document.getElementById("player2health").value);
-                    formData.append("player2damage", document.getElementById("player2damage").value);
+                        // Convert the selected colors to their RGBA equivalent with 0.7 opacity
+                        const colorMapping = {
+                            blue: "rgba(0, 0, 255, 0.3)",
+                            green: "rgba(0, 128, 0, 0.3)",
+                            yellow: "rgba(255, 255, 0, 0.3)",
+                            purple: "rgba(128, 0, 128, 0.3)",
+                            cyan: "rgba(0, 255, 255, 0.3)"
+                        };
 
-                    fetch("/submit", {
-                        method: "POST",
-                        body: formData
-                    }).then(response => response.text()).then(data => console.log("Data submitted:", data));
-                }
+                        document.querySelector('.team1').style.backgroundColor = colorMapping[team1Color] || "rgba(0, 0, 0, 0.3)";
+                        document.querySelector('.team2').style.backgroundColor = colorMapping[team2Color] || "rgba(0, 0, 0, 0.3)";
 
-                function endgame() {
-                    document.querySelector('.gamesetup').classList.remove('hidden');
-                    document.querySelector('.scoreboard').classList.add('hidden');
+                        document.querySelector('.gamesetup').classList.add('hidden');
+                        document.querySelector('.scoreboard').classList.remove('hidden');
 
-                    fetch("/endgame", {
-                        method: "POST"
-                    }).then(response => response.text()).then(data => console.log("Game ended:", data));
-                }
-            </script>
-        </head>
-        <body>
-            <div class="gamesetup">
-                <h1>Neon Knights Laser Tag</h1>
+                        const selectedGameMode = document.getElementById("gamemode").value;
 
-                <label for="gamemode" style="font-size: 24px;">Select Game Mode: </label>
-                <select id="gamemode">
-                    <option value="freeforall">Free For All</option>
-                    <option value="targetpractice">Target Practice</option>
-                </select>
+                        if (selectedGameMode === "freeforall")
+                        {
+                            document.querySelector('.freeforallbox').classList.remove('hidden');
+                        }
+                        else if (selectedGameMode === "targetpractice")
+                        {
+                            document.querySelector('.targetpracticebox').classList.remove('hidden');
+                        }
 
-                <div class="teambox">
-                    <div class="team1">
-                        <h2>Team 1</h2>
+                        const formData = new FormData();
+                        formData.append("gamemode", document.getElementById("gamemode").value);
+                        formData.append("team1name", document.getElementById("team1name").value);
+                        formData.append("team1color", document.getElementById("team1color").value);
+                        formData.append("player1name", document.getElementById("player1name").value);
+                        formData.append("player1health", document.getElementById("player1health").value);
+                        formData.append("player1damage", document.getElementById("player1damage").value);
+                        formData.append("team2name", document.getElementById("team2name").value);
+                        formData.append("team2color", document.getElementById("team2color").value);
+                        formData.append("player2name", document.getElementById("player2name").value);
+                        formData.append("player2health", document.getElementById("player2health").value);
+                        formData.append("player2damage", document.getElementById("player2damage").value);
 
-                        <div class="teamitem">
-                            <label for="team1name">Enter Team Name: </label>
-                            <input type="text" id="team1name" placeholder="Team Name">
+                        fetch("/submit", {
+                            method: "POST",
+                            body: formData
+                        }).then(response => response.text()).then(data => console.log("Data submitted:", data));
+                    }
+
+                    function endgame() {
+                        document.querySelector('.gamesetup').classList.remove('hidden');
+                        document.querySelector('.scoreboard').classList.add('hidden');
+                        document.querySelector('.freeforallbox').classList.add('hidden');
+                        document.querySelector('.targetpracticebox').classList.add('hidden');
+
+                        fetch("/endgame", {
+                            method: "POST"
+                        }).then(response => response.text()).then(data => console.log("Game ended:", data));
+                    }
+                </script>
+            </head>
+            <body>
+                <div class="gamesetup">
+                    <h1>Neon Knights Laser Tag</h1>
+
+                    <label for="gamemode" style="font-size: 24px;">Select Game Mode: </label>
+                    <select id="gamemode">
+                        <option value="freeforall">Free For All</option>
+                        <option value="targetpractice">Target Practice</option>
+                    </select>
+
+                    <div class="teambox">
+                        <div class="team">
+                            <h2>Team 1</h2>
+
+                            <div class="teamitem">
+                                <label for="team1name">Enter Team Name: </label>
+                                <input type="text" id="team1name" placeholder="Team Name">
+                            </div>
+                            <div class="teamitem">
+                                <label for="team1color">Select Team Color: </label>
+                                <select id="team1color">
+                                    <option value="blue">Blue</option>
+                                    <option value="green">Green</option>
+                                    <option value="yellow">Yellow</option>
+                                    <option value="purple">Purple</option>
+                                    <option value="cyan">Cyan</option>
+                                </select>
+                            </div>
+
+                            <div class="teamitem">
+                                <label for="player1name">Enter Player Name: </label>
+                                <input type="text" id="player1name" placeholder="Player Name">
+                            </div>
+                            <div class="teamitem">
+                                <label for="player1health">Enter Players Health: </label>
+                                <input type="text" id="player1health" placeholder="Player Health">
+                            </div>
+                            <div class="teamitem">
+                                <label for="player1damage">Enter Player Damage: </label>
+                                <input type="text" id="player1damage" placeholder="Player Damage">
+                            </div>
                         </div>
-                        <div class="teamitem">
-                            <label for="team1color">Select Team Color: </label>
-                            <select id="team1color">
-                                <option value="blue">Blue</option>
-                                <option value="green">Green</option>
-                                <option value="yellow">Yellow</option>
-                                <option value="purple">Purple</option>
-                                <option value="cyan">Cyan</option>
-                            </select>
-                        </div>
 
-                        <div class="teamitem">
-                            <label for="player1name">Enter Player Name: </label>
-                            <input type="text" id="player1name" placeholder="Player Name">
-                        </div>
-                        <div class="teamitem">
-                            <label for="player1health">Enter Players Health: </label>
-                            <input type="text" id="player1health" placeholder="Player Health">
-                        </div>
-                        <div class="teamitem">
-                            <label for="player1damage">Enter Player Damage: </label>
-                            <input type="text" id="player1damage" placeholder="Player Damage">
+                        <div class="team">
+                            <h2>Team 2</h2>
+
+                            <div class="teamitem">
+                                <label for="team2name">Enter Team Name: </label>
+                                <input type="text" id="team2name" placeholder="Team Name">
+                            </div>
+                            <div class="teamitem">
+                                <label for="team2color">Select Team Color: </label>
+                                <select id="team2color">
+                                    <option value="blue">Blue</option>
+                                    <option value="green">Green</option>
+                                    <option value="yellow">Yellow</option>
+                                    <option value="purple">Purple</option>
+                                    <option value="cyan">Cyan</option>
+                                </select>
+                            </div>
+
+                            <div class="teamitem">
+                                <label for="player2name">Enter Player Name: </label>
+                                <input type="text" id="player2name" placeholder="Player Name">
+                            </div>
+                            <div class="teamitem">
+                                <label for="player2health">Enter Players Health: </label>
+                                <input type="text" id="player2health" placeholder="Player Health">
+                            </div>
+                            <div class="teamitem">
+                                <label for="player2damage">Enter Player Damage: </label>
+                                <input type="text" id="player2damage" placeholder="Player Damage">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="team2">
-                        <h2>Team 2</h2>
+                    <button onclick="confirmgame()">Confirm Game Setup</button>
+                </div>
 
-                        <div class="teamitem">
-                            <label for="team2name">Enter Team Name: </label>
-                            <input type="text" id="team2name" placeholder="Team Name">
-                        </div>
-                        <div class="teamitem">
-                            <label for="team2color">Select Team Color: </label>
-                            <select id="team2color">
-                                <option value="blue">Blue</option>
-                                <option value="green">Green</option>
-                                <option value="yellow">Yellow</option>
-                                <option value="purple">Purple</option>
-                                <option value="cyan">Cyan</option>
-                            </select>
+                <div class="scoreboard">
+                    <h1>Neon Knights Laser Tag</h1>
+                    <div class="freeforallbox">
+                        <div class="team1">
+                            <div class="stat" id="t1n">
+                                <!-- Insert Team 1 Name -->
+                            </div>
+
+                            <div class="statbox">
+                                <div class="stat">
+                                    PlayerName
+                                </div>
+                                <div class="stat">
+                                    Kills
+                                </div>
+                                <div class="stat">
+                                    Deaths
+                                </div>
+                                <div class="stat">
+                                    K/D
+                                </div>
+                            </div>
+
+                            <div class="statbox">
+                                <div class="stat" id="p1n">
+                                    <!-- Insert Player 1 Name -->
+                                </div>
+                                <div class="stat" id="player1kills">
+                                    <!-- Insert Player 1 Kills -->
+                                </div>
+                                <div class="stat" id="player1deaths">
+                                    <!-- Insert Player 1 Deaths -->
+                                </div>
+                                <div class="stat" id="player1kd">
+                                    <!-- Insert Player 1 Score -->
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="teamitem">
-                            <label for="player2name">Enter Player Name: </label>
-                            <input type="text" id="player2name" placeholder="Player Name">
-                        </div>
-                        <div class="teamitem">
-                            <label for="player2health">Enter Players Health: </label>
-                            <input type="text" id="player2health" placeholder="Player Health">
-                        </div>
-                        <div class="teamitem">
-                            <label for="player2damage">Enter Player Damage: </label>
-                            <input type="text" id="player2damage" placeholder="Player Damage">
+                        <div class="team2">
+                            <div class="stat" id="t2n">
+                                <!-- Insert Team 2 Name -->
+                            </div>
+
+                            <div class="statbox">
+                                <div class="stat">
+                                    PlayerName
+                                </div>
+                                <div class="stat">
+                                    Kills
+                                </div>
+                                <div class="stat">
+                                    Deaths
+                                </div>
+                                <div class="stat">
+                                    K/D
+                                </div>
+                            </div>
+
+                            <div class="statbox">
+                                <div class="stat"  id="p2n">
+                                    <!-- Insert Player 2 Name -->
+                                </div>
+                                <div class="stat" id="player2kills">
+                                    <!-- Insert Player 2 Kills -->
+                                </div>
+                                <div class="stat" id="player2deaths">
+                                    <!-- Insert Player 2 Deaths -->
+                                </div>
+                                <div class="stat" id="player2kd">
+                                    <!-- Insert Player 2 Score -->
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <button onclick="confirmgame()">Confirm Game Setup</button>
-            </div>
+                    <div class="targetpracticebox">
+                        <h2>Target practice</h2>
+                        <div class="statbox">
+                            <div class="stat">
+                                Hits
+                            </div>
+                            <div class="stat">
+                                Misses
+                            </div>
+                            <div class="stat">
+                                Accuracy
+                            </div>
+                        </div>
+                        <div class="statbox">
+                            <div class="stat" id="hits">
+                                0
+                            </div>
+                            <div class="stat" id="misses">
+                                0
+                            </div>
+                            <div class="stat" id="accuracy">
+                                0
+                            </div>
+                        </div>
+                    </div>
 
-            <div class="scoreboard">
-    <h1>Neon Knights Laser Tag</h1>
-    <div class="teambox">
-
-        <div class="team1" style="background-color: ")rawliteral" +
-                  getteamcolor(1) + R"rawliteral(;>
-            <div class="stat" id="t1n">
-                <!-- Insert Team 1 Name -->
-                )rawliteral" +
-                  Team1Name + R"rawliteral(
-            </div>
-
-            <div class="statbox">
-                <div class="stat">
-                    PlayerName
+                    <button onclick="endgame()">End Game</button>
                 </div>
-                <div class="stat">
-                    Kills
-                </div>
-                <div class="stat">
-                    Deaths
-                </div>
-                <div class="stat">
-                    K/D
-                </div>
-            </div>
-
-            <div class="statbox">
-                <div class="stat" id="p1n">
-                    <!-- Insert Player 1 Name -->
-                    )rawliteral" +
-                  Player1Name + R"rawliteral(
-                </div>
-                <div class="stat" id="player1kills">
-                    <!-- Insert Player 1 Kills -->
-                    )rawliteral" +
-                  Player1Kills + R"rawliteral(
-                </div>
-                <div class="stat" id="player1deaths">
-                    <!-- Insert Player 1 Deaths -->
-                    )rawliteral" +
-                  Player1Deaths + R"rawliteral(
-                </div>
-                <div class="stat" id="player1kd">
-                    <!-- Insert Player 1 Score -->
-                    )rawliteral" +
-                  Player1kd + R"rawliteral(
-                </div>
-            </div>
-        </div>
-
-        <div class="team2"  style="background-color: ")rawliteral" +
-                  getteamcolor(1) + R"rawliteral(;>
-            <div class="stat" id="t2n">
-                <!-- Insert Team 2 Name -->
-                )rawliteral" +
-                  Team2Name + R"rawliteral(
-            </div>
-
-            <div class="statbox">
-                <div class="stat">
-                    PlayerName
-                </div>
-                <div class="stat">
-                    Kills
-                </div>
-                <div class="stat">
-                    Deaths
-                </div>
-                <div class="stat">
-                    K/D
-                </div>
-            </div>
-
-            <div class="statbox">
-                <div class="stat"  id="p2n">
-                    <!-- Insert Player 2 Name -->
-                    )rawliteral" +
-                  Player2Name + R"rawliteral(
-                </div>
-                <div class="stat" id="player2kills">
-                    <!-- Insert Player 2 Kills -->
-                    )rawliteral" +
-                  Player2Kills + R"rawliteral(
-                </div>
-                <div class="stat" id="player2deaths">
-                    <!-- Insert Player 2 Deaths -->
-                    )rawliteral" +
-                  Player2Deaths + R"rawliteral(
-                </div>
-                <div class="stat" id="player2kd">
-                    <!-- Insert Player 2 Score -->
-                    )rawliteral" +
-                  Player2kd + R"rawliteral(
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="scoreboard">
-        <h2>Target Practice Stats</h2>
-        <div class="statbox">
-            <div class="stat">
-                Hits
-            </div>
-            <div class="stat">
-                Misses
-            </div>
-            <div class="stat">
-                Accuracy
-            </div>
-        </div>
-        <div class="statbox">
-            <div class="stat" id="hits">0</div>
-            <div class="stat" id="misses">0</div>
-            <div class="stat" id="accuracy">0</div>
-        </div>
-    </div>
-    <button onclick="endgame()">End Game</button>
-</div>
-</body>
-</html>
-
+            </body>
+        </html>
     )rawliteral";
     return html;
 }
+
 
 void UpdateWebpage()
 {
